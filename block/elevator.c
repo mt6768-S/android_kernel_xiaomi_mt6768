@@ -965,35 +965,6 @@ out:
 	return ret;
 }
 
-/*
- * For blk-mq devices, we default to using mq-deadline, if available, for single
- * queue devices.  If deadline isn't available OR we have multiple queues,
- * default to "none".
- */
-int elevator_init_mq(struct request_queue *q)
-{
-	struct elevator_type *e;
-	int err = 0;
-
-	if (q->nr_hw_queues != 1)
-		return 0;
-
-	WARN_ON_ONCE(test_bit(QUEUE_FLAG_REGISTERED, &q->queue_flags));
-
-	if (unlikely(q->elevator))
-		goto out;
-
-	e = elevator_get(q, "mq-deadline", false);
-	if (!e)
-		goto out;
-
-	err = blk_mq_init_sched(q, e);
-	if (err)
-		elevator_put(e);
-out:
-	return err;
-}
-
 
 /*
  * switch to new_e io scheduler. be careful not to introduce deadlocks -
