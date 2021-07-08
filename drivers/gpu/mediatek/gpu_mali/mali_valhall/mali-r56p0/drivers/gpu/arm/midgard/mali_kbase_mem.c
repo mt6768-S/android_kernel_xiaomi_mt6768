@@ -238,6 +238,7 @@ int kbase_mem_init(struct kbase_device *kbdev)
 						 KBASE_MEM_POOL_MAX_SIZE_KCTX);
 
 	spin_lock_init(&kbdev->gpu_mem_usage_lock);
+	kbdev->dma_buf_pages = 0;
 	kbdev->process_root = RB_ROOT;
 	kbdev->dma_buf_root = RB_ROOT;
 	mutex_init(&kbdev->dma_buf_lock);
