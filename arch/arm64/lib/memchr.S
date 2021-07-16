@@ -69,6 +69,6 @@ CPU_LE( rev tmp, tmp)
     add result, srcin, tmp, asr #3
     ret
 L(not_found):
-    mov result, #0
-    ret
-ENDPIPROC(memchr)
+	mov	result, #0
+	ret
+SYM_FUNC_END_PI(memchr)
