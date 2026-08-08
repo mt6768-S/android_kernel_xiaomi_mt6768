@@ -38,7 +38,7 @@
 
     .p2align 4
     nop
-WEAK(memchr)
+SYM_FUNC_START_WEAK_PI(memchr)
     and chrin, chrin, #0xff
     lsr wordcnt, cntin, #3
     cbz wordcnt, L(byte_loop)
