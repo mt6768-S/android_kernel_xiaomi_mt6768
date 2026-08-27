@@ -4080,6 +4080,7 @@ static const struct snd_soc_dapm_widget mt6358_dapm_widgets[] = {
 	SND_SOC_DAPM_INPUT("AIN2"),
 
 	SND_SOC_DAPM_INPUT("AIN0_DMIC"),
+	SND_SOC_DAPM_INPUT("AIN2_DMIC"),
 	SND_SOC_DAPM_INPUT("AIN3_DMIC"),
 
 	/* DC trim : trigger dc trim flow because set the reg when init_reg */
@@ -4113,6 +4114,11 @@ static const struct snd_soc_dapm_route mt6358_dapm_routes[] = {
 	{"AIF1TX", NULL, "AFE_ON"},
 
 	{"AIF Out Mux", NULL, "Mic Type Mux"},
+	{"Mic Type Mux", "ACC", "MIC_BIAS"},
+	{"Mic Type Mux", "DMIC", "MIC_BIAS"},
+	{"Mic Type Mux", "DCC", "MIC_BIAS"},
+	{"Mic Type Mux", "DCC_ECM_DIFF", "MIC_BIAS"},
+	{"Mic Type Mux", "DCC_ECM_SINGLE", "MIC_BIAS"},
 	{"AIF Out Mux", NULL, "AIN0_DMIC"},
 	{"AIF Out Mux", NULL, "AIN2_DMIC"},
 	{"AIF Out Mux", NULL, "ADC L"},
