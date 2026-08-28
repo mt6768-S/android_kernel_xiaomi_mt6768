@@ -279,6 +279,7 @@ extern int GT9764AF_Release(struct inode *a_pstInode, struct file *a_pstFile);
 extern int GT9764AF_PowerDown(struct i2c_client *pstAF_I2Cclient,
 				int *pAF_Opened);
 extern int GT9764AF_GetFileName(unsigned char *pFileName);
+extern void GT9764AF_SwitchToPowerDown(struct i2c_client *pstAF_I2Cclient);
 
 #define LC898122AF_SetI2Cclient LC898122AF_SetI2Cclient_Main
 #define LC898122AF_Ioctl LC898122AF_Ioctl_Main
