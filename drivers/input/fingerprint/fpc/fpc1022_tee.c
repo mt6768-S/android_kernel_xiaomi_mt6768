@@ -66,7 +66,7 @@
 #define FPC1022_RESET_HIGH2_US 5000
 
 #define FPC_IRQ_DEV_NAME         "fpc_irq"
-#define FPC_TTW_HOLD_TIME 2000
+#define FPC_TTW_HOLD_TIME 500
 
 #define     FPC102X_REG_HWID      252
 #define FPC1022_CHIP 0x1000
