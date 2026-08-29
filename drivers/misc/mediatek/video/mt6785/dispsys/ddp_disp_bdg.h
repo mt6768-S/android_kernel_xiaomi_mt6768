@@ -20,7 +20,7 @@
 #ifdef CONFIG_MTK_MT6382_CMD_MODE
 #define _CMD_120FPS_
 #endif
-//#define _90HZ_
+#define _90HZ_
 #ifdef _VDO_120FPS_	 //for vdo mode 120Hz
 #define RXTX_RATIO		(230)
 #endif

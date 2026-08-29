@@ -295,7 +295,7 @@ static int ti_lmu_backlight_update_brightness_register(struct ti_lmu_bl *lmu_bl,
 	int ret;
 	int i = 0;
 
-	regmap_write(regmap, 0x13, 0x01);
+	regmap_write(regmap, 0x13, 0x22); //HQ-142064
 
 	if (lmu_bl->mode == BL_PWM_BASED) {
 		switch (cfg->pwm_action) {
@@ -345,7 +345,6 @@ static int ti_lmu_backlight_update_brightness_register(struct ti_lmu_bl *lmu_bl,
 					 brightness);
 		if (ret)
 			return ret;
-		pr_err("[bkl][after]11bit %s brightness = %d\n", __func__, brightness);
 		val = (brightness >> LMU_BACKLIGHT_11BIT_MSB_SHIFT) & 0xFF;
 	} else {
 		val = brightness & 0xFF;
@@ -774,6 +773,7 @@ static int ti_lmu_backlight_init(struct ti_lmu_bl_chip *chip)
 	}
 #else
 	regmap_write(regmap, 0x10, 0x03);
+	regmap_write(regmap, 0x13, 0x22); // HQ-142064
 	regmap_write(regmap, 0x16, 0x00);
 	regmap_write(regmap, 0x19, 0x03);
 	regmap_write(regmap, 0x18, 0x15);//21.8mA default
