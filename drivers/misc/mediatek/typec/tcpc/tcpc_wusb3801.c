@@ -52,6 +52,10 @@
 #include "inc/tcpci_timer.h"
 #include "inc/tcpci_typec.h"
 
+#ifdef CONFIG_CHARGER_BQ2589X_CHARGER
+#define __BQ25890H__ 1
+#include "../../../../power/supply/mediatek/charger/bq2589x_reg.h"
+#endif
 
 #if 1 /*  #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0))*/
 #include <linux/sched/rt.h>
@@ -97,6 +101,9 @@ struct wusb3801_chip {
 extern	uint8_t     typec_cc_orientation;
 #endif	/* __TEST_CC_PATCH__ */
 static struct i2c_client *w_client;
+
+static bool g_irq_3801_flag = false;
+struct wusb3801_chip *g_3801_chip = NULL;
 
 static int wusb3801_read_device(void *client, u32 reg, int len, void *dst)
 {
@@ -233,6 +240,7 @@ static int test_cc_patch(struct wusb3801_chip *chip)
 	if (ret & WUSB3801_FORCE_ERR_RCY_MASK) {
 		pr_err("wusb3801 [%s]enter error recovery :0x%x\n", __func__, ret);
 		wusb3801_i2c_write8(chip->tcpc, WUSB3801_REG_TEST_02, 0x00);
+		wusb3801_i2c_write8(chip->tcpc, WUSB3801_REG_TEST_09, 0x00);
 	}
     return BITS_GET(rc, 0x40);
 }
@@ -287,6 +295,7 @@ static void wusb3801_irq_work_handler(struct kthread_work *work)
 		tcpci_notify_typec_state(tcpc);
 		if (tcpc->typec_attach_old == TYPEC_ATTACHED_SRC) {
 		    tcpci_source_vbus(tcpc, TCP_VBUS_CTRL_TYPEC, TCPC_VBUS_SOURCE_0V, 0);
+			msleep(1);
 		}
 		tcpc->typec_attach_old = TYPEC_UNATTACHED;
 	}
@@ -349,14 +358,35 @@ static void wusb3801_irq_work_handler(struct kthread_work *work)
 	tcpci_unlock_typec(tcpc);
 }
 
+void wusb3801_intr_handler_resume(void)
+{
+	if (g_irq_3801_flag == true) {
+		g_irq_3801_flag = false;
+		pr_err("%s:ljj  g_irq_3801_flag is true\n", __func__);
+		__pm_wakeup_event(g_3801_chip->irq_wake_lock, WUSB3801_IRQ_WAKE_TIME);
+		kthread_queue_work(&g_3801_chip->irq_worker, &g_3801_chip->irq_work);
+	}
+	return;
+}
 
 static irqreturn_t wusb3801_intr_handler(int irq, void *data)
 {
 	struct wusb3801_chip *chip = data;
 
+#ifdef CONFIG_CHARGER_BQ2589X_CHARGER
+	if (bq2589x_get_cdp_status() == true) {
+		pr_err("%s:ljj  bq2589x_get_cdp_status is true,returned!!!\n", __func__);
+		g_irq_3801_flag = true;
+		g_3801_chip = chip;
+	} else {
+#else
+	if(1) {
+#endif
 	__pm_wakeup_event(chip->irq_wake_lock, WUSB3801_IRQ_WAKE_TIME);
 
 	kthread_queue_work(&chip->irq_worker, &chip->irq_work);
+	}
+
 	return IRQ_HANDLED;
 }
 
