@@ -555,32 +555,25 @@ static bool disp_aal_read_single_hist(enum DISP_MODULE_ENUM module)
 	const int color_offset = 0;
 	const enum DISP_MODULE_ENUM color_module = DISP_MODULE_COLOR0;
 #endif
-	bool read_success = false;
 	int i;
 
+	if (unlikely(atomic_read(&g_aal_is_clock_on[index_of_aal(module)]) != 1)) {
+		AAL_DBG("clock is off");
+		return false;
+	}
+
 	for (i = 0; i < AAL_HIST_BIN; i++) {
-		read_success = disp_aal_reg_get(module,
-			DISP_AAL_STATUS_00 + offset + (i << 2),
-			&g_aal_hist.maxHist[i]);
-		if (read_success != true)
-			break;
+		g_aal_hist.maxHist[i] = DISP_REG_GET(DISP_AAL_STATUS_00 + offset + (i << 2));
 	}
 #ifdef AAL_HAS_YHIST
 	for (i = 0; i < AAL_HIST_BIN; i++) {
-		read_success = disp_aal_reg_get(module,
-			DISP_Y_HISTOGRAM_00 + offset + (i << 2),
-			&g_aal_hist.yHist[i]);
-		if (read_success != true)
-			break;
+		g_aal_hist.yHist[i] = DISP_REG_GET(DISP_Y_HISTOGRAM_00 + offset + (i << 2));
 	}
 #endif
-	if (read_success == true) {
-		read_success = disp_color_reg_get(color_module,
-			DISP_COLOR_TWO_D_W1_RESULT + color_offset,
-				&g_aal_hist.colorHist);
-	}
 
-	return read_success;
+	return disp_color_reg_get(color_module,
+		DISP_COLOR_TWO_D_W1_RESULT + color_offset,
+		&g_aal_hist.colorHist);
 }
 
 static void disp_aal_clear_irq(enum DISP_MODULE_ENUM module, bool cleared,
@@ -1791,90 +1784,90 @@ static int disp_aal_write_dre_to_reg(enum DISP_MODULE_ENUM module,
 	defined(CONFIG_MACH_MT6739) || defined(CONFIG_MACH_MT6765) || \
 	defined(CONFIG_MACH_MT6761) || defined(CONFIG_MACH_MT6768) || \
 	defined(CONFIG_MACH_MT6771)
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(0) + offset,
-	    DRE_REG_2(gain[0], 0, gain[1], 14), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(1) + offset,
-		DRE_REG_2(gain[2], 0, gain[3], 13), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(2) + offset,
-		DRE_REG_2(gain[4], 0, gain[5], 12), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(3) + offset,
-		DRE_REG_2(gain[6], 0, gain[7], 12), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(4) + offset,
-		DRE_REG_2(gain[8], 0, gain[9], 11), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(5) + offset,
-		DRE_REG_2(gain[10], 0, gain[11], 11), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(6) + offset,
-		DRE_REG_2(gain[12], 0, gain[13], 11), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(7) + offset,
-		DRE_REG_2(gain[14], 0, gain[15], 11), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(8) + offset,
-		DRE_REG_3(gain[16], 0, gain[17], 10, gain[18], 20), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(9) + offset,
-		DRE_REG_3(gain[19], 0, gain[20], 10, gain[21], 19), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(10) + offset,
-		DRE_REG_3(gain[22], 0, gain[23], 9, gain[24], 18), ~0);
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(0) + offset,
+	    DRE_REG_2(gain[0], 0, gain[1], 14));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(1) + offset,
+		DRE_REG_2(gain[2], 0, gain[3], 13));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(2) + offset,
+		DRE_REG_2(gain[4], 0, gain[5], 12));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(3) + offset,
+		DRE_REG_2(gain[6], 0, gain[7], 12));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(4) + offset,
+		DRE_REG_2(gain[8], 0, gain[9], 11));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(5) + offset,
+		DRE_REG_2(gain[10], 0, gain[11], 11));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(6) + offset,
+		DRE_REG_2(gain[12], 0, gain[13], 11));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(7) + offset,
+		DRE_REG_2(gain[14], 0, gain[15], 11));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(8) + offset,
+		DRE_REG_3(gain[16], 0, gain[17], 10, gain[18], 20));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(9) + offset,
+		DRE_REG_3(gain[19], 0, gain[20], 10, gain[21], 19));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(10) + offset,
+		DRE_REG_3(gain[22], 0, gain[23], 9, gain[24], 18));
 
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE_11 + offset,
-		DRE_REG_3(gain[25], 0, gain[26], 9, gain[27], 18), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE_12 + offset, gain[28], ~0);
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE_11 + offset,
+		DRE_REG_3(gain[25], 0, gain[26], 9, gain[27], 18));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE_12 + offset, gain[28]);
 #elif defined(CONFIG_MACH_MT6799) || defined(CONFIG_MACH_MT3967) || \
 	defined(CONFIG_MACH_MT6779) || defined(CONFIG_MACH_MT6785)
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(0) + offset,
-	    DRE_REG_2(gain[0], 0, gain[1], 14), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(1) + offset,
-		DRE_REG_2(gain[2], 0, gain[3], 13), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(2) + offset,
-		DRE_REG_2(gain[4], 0, gain[5], 12), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(3) + offset,
-		DRE_REG_2(gain[6], 0, gain[7], 11), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(4) + offset,
-		DRE_REG_2(gain[8], 0, gain[9], 11), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(5) + offset,
-		DRE_REG_2(gain[10], 0, gain[11], 11), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(6) + offset,
-		DRE_REG_3(gain[12], 0, gain[13], 11, gain[14], 22), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(7) + offset,
-		DRE_REG_3(gain[15], 0, gain[16], 10, gain[17], 20), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(8) + offset,
-		DRE_REG_3(gain[18], 0, gain[19], 10, gain[20], 20), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(9) + offset,
-		DRE_REG_3(gain[21], 0, gain[22], 9, gain[23], 18), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(10) + offset,
-		DRE_REG_3(gain[24], 0, gain[25], 9, gain[26], 18), ~0);
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(0) + offset,
+	    DRE_REG_2(gain[0], 0, gain[1], 14));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(1) + offset,
+		DRE_REG_2(gain[2], 0, gain[3], 13));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(2) + offset,
+		DRE_REG_2(gain[4], 0, gain[5], 12));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(3) + offset,
+		DRE_REG_2(gain[6], 0, gain[7], 11));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(4) + offset,
+		DRE_REG_2(gain[8], 0, gain[9], 11));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(5) + offset,
+		DRE_REG_2(gain[10], 0, gain[11], 11));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(6) + offset,
+		DRE_REG_3(gain[12], 0, gain[13], 11, gain[14], 22));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(7) + offset,
+		DRE_REG_3(gain[15], 0, gain[16], 10, gain[17], 20));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(8) + offset,
+		DRE_REG_3(gain[18], 0, gain[19], 10, gain[20], 20));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(9) + offset,
+		DRE_REG_3(gain[21], 0, gain[22], 9, gain[23], 18));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(10) + offset,
+		DRE_REG_3(gain[24], 0, gain[25], 9, gain[26], 18));
 	if (g_aal_dre_offset_separate == true) {
 		/* Write dre curve to different register */
 #if defined(CONFIG_MACH_MT6799)
-		DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE_11 + offset,
-		    DRE_REG_2(gain[27], 0, gain[28], 9), ~0);
+		DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE_11 + offset,
+		    DRE_REG_2(gain[27], 0, gain[28], 9));
 #endif
 	} else {
 		/* Write dre curve to different register */
-		DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(11) + offset,
-		    DRE_REG_2(gain[27], 0, gain[28], 9), ~0);
+		DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(11) + offset,
+		    DRE_REG_2(gain[27], 0, gain[28], 9));
 	}
 #else
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(0) + offset,
-	    DRE_REG_2(gain[0], 0, gain[1], 12), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(1) + offset,
-		DRE_REG_2(gain[2], 0, gain[3], 12), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(2) + offset,
-		DRE_REG_2(gain[4], 0, gain[5], 11), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(3) + offset,
-		DRE_REG_3(gain[6], 0, gain[7], 11, gain[8], 21), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(4) + offset,
-		DRE_REG_3(gain[9], 0, gain[10], 10, gain[11], 20), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(5) + offset,
-		DRE_REG_3(gain[12], 0, gain[13], 10, gain[14], 20), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(6) + offset,
-		DRE_REG_3(gain[15], 0, gain[16], 10, gain[17], 20), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(7) + offset,
-		DRE_REG_3(gain[18], 0, gain[19], 9, gain[20], 18), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(8) + offset,
-		DRE_REG_3(gain[21], 0, gain[22], 9, gain[23], 18), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(9) + offset,
-		DRE_REG_3(gain[24], 0, gain[25], 9, gain[26], 18), ~0);
-	DISP_REG_MASK(cmdq, DISP_AAL_DRE_FLT_FORCE(10) + offset,
-		DRE_REG_2(gain[27], 0, gain[28], 9), ~0);
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(0) + offset,
+	    DRE_REG_2(gain[0], 0, gain[1], 12));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(1) + offset,
+		DRE_REG_2(gain[2], 0, gain[3], 12));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(2) + offset,
+		DRE_REG_2(gain[4], 0, gain[5], 11));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(3) + offset,
+		DRE_REG_3(gain[6], 0, gain[7], 11, gain[8], 21));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(4) + offset,
+		DRE_REG_3(gain[9], 0, gain[10], 10, gain[11], 20));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(5) + offset,
+		DRE_REG_3(gain[12], 0, gain[13], 10, gain[14], 20));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(6) + offset,
+		DRE_REG_3(gain[15], 0, gain[16], 10, gain[17], 20));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(7) + offset,
+		DRE_REG_3(gain[18], 0, gain[19], 9, gain[20], 18));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(8) + offset,
+		DRE_REG_3(gain[21], 0, gain[22], 9, gain[23], 18));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(9) + offset,
+		DRE_REG_3(gain[24], 0, gain[25], 9, gain[26], 18));
+	DISP_REG_SET(cmdq, DISP_AAL_DRE_FLT_FORCE(10) + offset,
+		DRE_REG_2(gain[27], 0, gain[28], 9));
 #endif
 
 	return 0;
