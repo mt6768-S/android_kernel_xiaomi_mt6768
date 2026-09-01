@@ -69,7 +69,7 @@
 #include "gf_spi_tee.h"
 #include  <linux/regulator/consumer.h>
 
-#define WAKELOCK_HOLD_TIME 2000 /* in ms */
+#define WAKELOCK_HOLD_TIME 500 /* in ms */
 
 /**************************defination******************************/
 #define GF_DEV_NAME "goodix_fp"
@@ -435,6 +435,7 @@ static void gf_enable_irq(struct gf_device *gf_dev)
 		gf_debug(ERR_LOG, "%s, irq already enabled\n", __func__);
 	} else {
 		enable_irq(gf_dev->irq);
+		enable_irq_wake(gf_dev->irq);
 		gf_dev->irq_count = 1;
 		gf_debug(DEBUG_LOG, "%s enable interrupt!\n", __func__);
 	}
@@ -445,6 +446,7 @@ static void gf_disable_irq(struct gf_device *gf_dev)
 	if (0 == gf_dev->irq_count) {
 		gf_debug(ERR_LOG, "%s, irq already disabled\n", __func__);
 	} else {
+		disable_irq_wake(gf_dev->irq);
 		disable_irq(gf_dev->irq);
 		gf_dev->irq_count = 0;
 		gf_debug(DEBUG_LOG, "%s disable interrupt!\n", __func__);
