@@ -93,7 +93,7 @@ static enum IMGSENSOR_RETURN imgsensor_hw_power_sequence(
 	struct IMGSENSOR_HW_SENSOR_POWER *psensor_pwr =
 	    &phw->sensor_pwr[sensor_idx];
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 	struct IMGSENSOR_HW_SENSOR_POWER *psensor_pwr_Mi =
 		&phw->sensor_pwr[IMGSENSOR_SENSOR_IDX_SUB2];
 #endif
@@ -143,7 +143,7 @@ static enum IMGSENSOR_RETURN imgsensor_hw_power_sequence(
 
 			mdelay(ppwr_info->pin_on_delay);
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 		if (sensor_idx == IMGSENSOR_SENSOR_IDX_MAIN &&
 			ppwr_info->pin ==IMGSENSOR_HW_PIN_DOVDD)
 		{
@@ -205,7 +205,7 @@ static enum IMGSENSOR_RETURN imgsensor_hw_power_sequence(
 					    ppwr_info->pin,
 					    ppwr_info->pin_state_off);
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 	if (sensor_idx == IMGSENSOR_SENSOR_IDX_MAIN &&
 		ppwr_info->pin ==IMGSENSOR_HW_PIN_DOVDD)
 	{

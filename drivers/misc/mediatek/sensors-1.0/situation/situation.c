@@ -538,7 +538,7 @@ static int situation_misc_init(struct situation_context *cxt)
 
 	return err;
 }
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 static ssize_t sarcali_update_store(struct device *dev,
         struct device_attribute *attr, const char *buf,
         size_t count)
@@ -568,7 +568,7 @@ DEVICE_ATTR_RW(situactive);
 DEVICE_ATTR_RW(situbatch);
 DEVICE_ATTR_RW(situflush);
 DEVICE_ATTR_RO(situdevnum);
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 DEVICE_ATTR_WO(sarcali_update);  //new add
 #endif
 
@@ -577,7 +577,7 @@ static struct attribute *situation_attributes[] = {
 	&dev_attr_situbatch.attr,
 	&dev_attr_situflush.attr,
 	&dev_attr_situdevnum.attr,
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 	&dev_attr_sarcali_update.attr,
 #endif
 	NULL

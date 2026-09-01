@@ -621,7 +621,7 @@ static long EEPROM_drv_ioctl(struct file *file,
 		}
 
 		if (pcmdInf != NULL && g_lastDevID != ptempbuf->deviceID) {
-			#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+			#ifdef CONFIG_TARGET_PRODUCT_SELENE
 			//depth camera otp is in sensor,unable to get data due to register i2c fail,so disable it
 			if(ptempbuf->deviceID != 8) return -EFAULT;
 			#endif

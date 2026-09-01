@@ -72,7 +72,7 @@
 bool thermal_is_500;
 static struct charger_manager *pinfo;
 static struct list_head consumer_head = LIST_HEAD_INIT(consumer_head);
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 extern int hq_selene_pcba_config;
 #endif
 
@@ -89,7 +89,7 @@ struct tag_bootmode {
 	u32 boottype;
 };
 
-#if defined(TARGET_PRODUCT_LANCELOT) || defined(TARGET_PRODUCT_SHIVA)
+#if defined(CONFIG_TARGET_PRODUCT_LANCELOT)
 typedef enum {
 	PCBA_UNKNOW = 0,
 	PCBA_J19_P0_1_CN = 0x10,
@@ -115,7 +115,7 @@ typedef enum {
 	PCBA_J19P_END,
 	PCBA_END,
 } PCBA_CONFIG;
-#elif defined(CONFIG_TARGET_PRODUCT_SELENECOMMON)
+#elif defined(CONFIG_TARGET_PRODUCT_SELENE)
 typedef enum
 {
 	PCBA_UNKNOW = 0,
@@ -1045,10 +1045,10 @@ void charger_manager_set_prop_system_temp_level(int temp_level)
 	if (pinfo == NULL)
 		return ;
 	pcba_to_thermal = get_huaqin_pcba_config();
-#if defined(TARGET_PRODUCT_LANCELOT) || defined(TARGET_PRODUCT_SHIVA)
+#if defined(CONFIG_TARGET_PRODUCT_LANCELOT)
 	if (pcba_to_thermal == PCBA_J19_MP_CN)
 		is_cn = true;
-#elif defined(CONFIG_TARGET_PRODUCT_SELENECOMMON)
+#elif defined(CONFIG_TARGET_PRODUCT_SELENE)
 	if (pcba_to_thermal == PCBA_K19B_MP_CN || pcba_to_thermal == PCBA_K19S_MP_CN)
 		is_cn = true;
 #else
@@ -1364,7 +1364,7 @@ int charger_get_vbus(void)
 	return vchr;
 }
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 int hq_config(void)
 {
 	int config;
@@ -1490,7 +1490,7 @@ void do_sw_jeita_state_machine(struct charger_manager *info)
 		sw_jeita->sm = TEMP_BELOW_NEG_T0;
 		sw_jeita->charging = false;
 	}
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 	hq_jeita_config(info);
 #endif
 

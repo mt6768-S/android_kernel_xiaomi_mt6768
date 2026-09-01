@@ -27,7 +27,7 @@ extern unsigned int ov8856_qtech_front_read_otp_info(struct i2c_client *client, 
 #endif
 #endif
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 extern unsigned int gc02m1_read_otp_info(struct i2c_client *client, unsigned int addr, unsigned char *data, unsigned int size);
 extern unsigned int ov02b1b_read_otp_info(struct i2c_client *client, unsigned int addr, unsigned char *data, unsigned int size);
 #endif
@@ -45,7 +45,7 @@ struct stCAM_CAL_LIST_STRUCT g_camCalList[] = {
 	{GC5035_OFILM_SENSOR_ID, 0xA4, Common_read_region},
 	{GC5035_QTECH_SENSOR_ID, 0xA4, Common_read_region},
 #endif
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 	{OV50C40_OFILM_MAIN_SENSOR_ID, 0xA2, Common_read_region},
 	{S5KJN1_OFILM_MAIN_SENSOR_ID, 0xA2, Common_read_region},
 	{OV50C40_QTECH_MAIN_SENSOR_ID, 0xA2, Common_read_region},

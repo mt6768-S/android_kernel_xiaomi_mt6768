@@ -152,7 +152,7 @@ dual_swchg_select_charging_current_limit(struct charger_manager *info)
 
 	if (info->atm_enabled == true && (info->chr_type == STANDARD_HOST ||
 	    info->chr_type == CHARGING_HOST)) {
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 		pdata->input_current_limit = 100000; /* 100mA */
 #else
 		pdata->input_current_limit = 500000;
@@ -350,7 +350,7 @@ dual_swchg_select_charging_current_limit(struct charger_manager *info)
 				info->data.apple_2_1a_charger_current;
 	}
 
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 	if (info->enable_sw_jeita) {
 		if (IS_ENABLED(CONFIG_USBIF_COMPLIANCE)
 		    && info->chr_type == STANDARD_HOST)
@@ -562,7 +562,7 @@ static void swchg_select_cv(struct charger_manager *info)
 	if (info->enable_sw_jeita)
 		if (info->sw_jeita.cv != 0) {
 			chr_err("%s, info->sw_jeita.cv  = %d\n", __func__, info->sw_jeita.cv);
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 			charger_dev_set_constant_voltage(info->chg1_dev,
 							info->sw_jeita.cv);
 			return;
@@ -879,7 +879,7 @@ int mtk_dual_switch_chr_err(struct charger_manager *info)
 
 static int change_recharge_status(struct charger_manager *info)
 {
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 	bool recharge_flag = false;
 	unsigned int battery_uisoc = 0;
 	long int battery_volt = 0;

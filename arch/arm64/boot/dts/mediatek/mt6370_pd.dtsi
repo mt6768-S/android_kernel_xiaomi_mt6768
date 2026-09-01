@@ -19,7 +19,7 @@
 		mt-tcpc,notifier_supply_num = <2>;
 #endif
 
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
  		mt6370pd,intr_gpio = <&pio 24 0x0>;
  		mt6370pd,intr_gpio_num = <24>;
 #else

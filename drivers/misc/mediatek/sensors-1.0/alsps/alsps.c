@@ -1058,7 +1058,7 @@ static int __init early_lcm_name(char *p)
     } else if (memcmp(p, "nt36672", 7) == 0) {
     printk("LCM_name=nt36672A_fhdp_dsi_vdo_tianma_lcm_drv, g_screen_info = 2\n");
     g_screen_info = 1;
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
     } else if(strcmp(p, "dsi_panel_k19a_36_02_0a_dsc_vdo_lcm_drv") == 0) {
     g_screen_info = 3;
     } else if(strcmp(p, "dsi_panel_k19a_43_02_0b_dsc_vdo_lcm_drv") == 0) {
@@ -1419,7 +1419,7 @@ static int alsps_remove(void)
 
 	return 0;
 }
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 extern int alsps_ldo3_driver_init(void);
 #endif
 
@@ -1427,7 +1427,7 @@ static int __init alsps_init(void)
 {
 	pr_debug("%s\n", __func__);
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
   	pr_debug("%s: call alsps_ldo3_driver_init\n", __func__);
     	alsps_ldo3_driver_init();
 #endif

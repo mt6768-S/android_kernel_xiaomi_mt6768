@@ -32,7 +32,7 @@
 #define EXT_RCV_AMP_W_NAME "Ext_Reciver_Amp"    // ALPS05007528
 #endif
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 static const char *awinic = "awinic";
 static const char *foursemi = "foursemi";
 extern char *get_audio_pa_vendor(void);
