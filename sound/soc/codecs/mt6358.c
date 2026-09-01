@@ -1859,7 +1859,7 @@ static int mtk_hp_spk_enable(struct mt6358_priv *priv)
 				0xff, 0x0004);
 
 	/* Audio left headphone input multiplexor selection : LOL */
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 	set_hp_l_input_mux(priv, HP_INPUT_MUX_LOL);
 #endif
 
@@ -2006,13 +2006,13 @@ static int mtk_hp_spk_enable(struct mt6358_priv *priv)
 
 	/* Switch LOL MUX to audio DAC */
 	regmap_update_bits(priv->regmap, MT6358_AUDDEC_ANA_CON7,
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 			0x3 << 2, 0x2 << 2);
 #else
 			0x3 << 2, 0x1 << 2);
 #endif
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 	/* Switch HS MUX to audio DAC */
 	regmap_update_bits(priv->regmap, MT6358_AUDDEC_ANA_CON6,
 			   0x009F, 0x009B);
@@ -2447,7 +2447,7 @@ static int mtk_hp_dual_spk_disable(struct mt6358_priv *priv)
 	regmap_update_bits(priv->regmap, MT6358_AUDDEC_ANA_CON4,
 			0x1 << 6, 0x0);
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 	/* Power down HS driver */
 	regmap_update_bits(priv->regmap, MT6358_AUDDEC_ANA_CON6,
 			   RG_AUDHSPWRUP_VAUDP15_MASK_SFT |
@@ -2745,7 +2745,7 @@ static int mt_lo_event(struct snd_soc_dapm_widget *w,
 		regmap_update_bits(priv->regmap, MT6358_AUDDEC_ANA_CON7,
 				   0x3 << 2, 0x1 << 2);
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 	//lch inverse
 	regmap_update_bits(priv->regmap, MT6358_AFUNC_AUD_CON0,
 			   0x1 << CCI_LCH_INV_SFT,

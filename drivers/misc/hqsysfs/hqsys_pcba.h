@@ -1,7 +1,7 @@
 #ifndef HQSYS_PCBA
 #define HQSYS_PCBA
 
-#if defined(TARGET_PRODUCT_LANCELOT) || defined(TARGET_PRODUCT_SHIVA)
+#if defined(CONFIG_TARGET_PRODUCT_LANCELOT)
 
 typedef enum {
 	PCBA_UNKNOW = 0,
@@ -42,7 +42,7 @@ typedef enum {
 	PCBA_J19P_INDIA,
 	PCBA_J19P_POCO_INDIA,
 } PCBA_J19_CONFIG;
-#elif defined(TARGET_PRODUCT_SELENE)
+#elif defined(CONFIG_TARGET_PRODUCT_SELENE)
 typedef enum
 {
 	PCBA_UNKNOW = 0,

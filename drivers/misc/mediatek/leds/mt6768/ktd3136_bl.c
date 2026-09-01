@@ -648,7 +648,7 @@ int ktd3137_brightness_set(int brightness)
 {
 	LOG_DBG("%s brightness = %d\n", __func__, brightness);
 
-#ifdef CONFIG_TARGET_PRODUCT_MERLINCOMMON
+#ifdef CONFIG_TARGET_PRODUCT_MERLIN
 	if ((brightness < 5) && (brightness > 2)) {//HQ-61731
 		brightness = 5;
 		LOG_DBG("%s: lyd_lowest_brightness, brightness = %d", __func__, brightness);

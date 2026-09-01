@@ -327,7 +327,7 @@ int mtk_spk_update_dai_link(struct snd_soc_card *card,
 			__func__);
 		return -ENODEV;
 	}
-#ifdef CONFIG_TARGET_PRODUCT_MERLINCOMMON
+#ifdef CONFIG_TARGET_PRODUCT_MERLIN
 	if (mtk_spk_type == MTK_SPK_NOT_SMARTPA) {
 		dev_info(&pdev->dev, "%s(), no need to update dailink\n",
 			 __func__);

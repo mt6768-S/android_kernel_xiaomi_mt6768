@@ -74,14 +74,14 @@ static const char * const power_supply_technology_text[] = {
 };
 
 static const char * const power_supply_battery_type_text[] = {
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 	"NVT_68K", "COSMX_100K", "Unknown"
 #else
 	"SWD_68K", "COSMX_100K", "NVT_68K", "SWD_330K", "secret", "Unknown"
 #endif
 };
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 static const char * const power_supply_battery_vendor_text[] = {
 	"SWD_68K", "COSMX_100K", "NVT_68K", "SWD_330K", "secret", "Unknown"
 };
@@ -242,7 +242,7 @@ static ssize_t power_supply_show_property(struct device *dev,
 	case POWER_SUPPLY_PROP_MODEL_NAME ... POWER_SUPPLY_PROP_SERIAL_NUMBER:
 		ret = sprintf(buf, "%s\n", value.strval);
 		break;
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 	case POWER_SUPPLY_PROP_BATTERY_VENDOR:
 		ret = sprintf(buf, "%s\n",
 				   power_supply_battery_vendor_text[value.intval]);
@@ -414,7 +414,7 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(resistance),
 	POWER_SUPPLY_ATTR(resistance_capacitive),
 	POWER_SUPPLY_ATTR(resistance_id),
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 	POWER_SUPPLY_ATTR(battery_id_voltage),
 #endif
 	POWER_SUPPLY_ATTR(resistance_now),
@@ -556,7 +556,7 @@ static struct device_attribute power_supply_attrs[] = {
 	POWER_SUPPLY_ATTR(battery_type),
 	POWER_SUPPLY_ATTR(cycle_counts),
 	POWER_SUPPLY_ATTR(serial_number),
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 	POWER_SUPPLY_ATTR(battery_vendor),
 #endif
 };

@@ -55,7 +55,7 @@ static int sar_factory_enable_sensor(bool enabledisable,
 static int sar_factory_get_data(int32_t sensor_data[3])
 {
 	int err = 0;
-#ifndef TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 	struct data_unit_t data;
 
 	err = sensor_get_data_from_hub(ID_SAR, &data);
@@ -176,7 +176,7 @@ static int sar_recv_data(struct data_unit_t *event, void *reserved)
 		value[0] = event->sar_event.data[0];
 		value[1] = event->sar_event.data[1];
 		value[2] = event->sar_event.data[2];
-#ifdef TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
         spin_lock(&calibration_lock);
 		obj->data_action_data_cpy[0] = event->sar_event.data[0];
 		obj->data_action_data_cpy[1] = event->sar_event.data[1];

@@ -32,7 +32,7 @@
 #define EXT_RCV_AMP_W_NAME "Ext_Reciver_Amp"    // ALPS05007528
 #endif
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 static const char *awinic = "awinic";
 static const char *foursemi = "foursemi";
 extern char *get_audio_pa_vendor(void);
@@ -365,7 +365,7 @@ static const struct snd_kcontrol_new mt6768_mt6358_controls[] = {
 
 
 
-#ifdef CONFIG_TARGET_PRODUCT_MERLINCOMMON
+#ifdef CONFIG_TARGET_PRODUCT_MERLIN
 static int cs35l41_dailink_init(struct snd_soc_pcm_runtime *rtd)
 {
 	struct snd_soc_card *card = rtd->card;
@@ -833,7 +833,7 @@ static struct snd_soc_dai_link mt6768_mt6358_dai_links[] = {
 		.ignore_suspend = 1,
 		.init = mt6768_mt6358_init,
 	},
-#ifdef CONFIG_TARGET_PRODUCT_MERLINCOMMON
+#ifdef CONFIG_TARGET_PRODUCT_MERLIN
 	{
 		.name = "I2S3",
 		.cpu_dai_name = "I2S3",

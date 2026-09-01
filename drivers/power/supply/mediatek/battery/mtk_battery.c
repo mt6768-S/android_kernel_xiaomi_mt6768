@@ -134,7 +134,7 @@ static enum power_supply_property battery_props[] = {
 	POWER_SUPPLY_PROP_BATTERY_TYPE,
 	POWER_SUPPLY_PROP_CAPACITY_LEVEL,
 	POWER_SUPPLY_PROP_TIME_TO_FULL_NOW,
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 	POWER_SUPPLY_PROP_BATTERY_VENDOR,
 	POWER_SUPPLY_PROP_BATTERY_ID_VOLTAGE,
 #endif
@@ -477,7 +477,7 @@ static int bms_get_property(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_BATTERY_TYPE:
 		pr_info("wlc raw battery_type index :%d.\n", gm.battery_id);
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 		val->intval = gm.battery_id;
 #else
 		if (gm.battery_id == 4) {
@@ -491,7 +491,7 @@ static int bms_get_property(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_FULL:
 		pr_err("gm.algo_qmax:%d gm.aging_factor:%d\n", gm.algo_qmax, gm.aging_factor);
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 		if (mtk_qmax_aging < 50200)
 			qmax = mtk_qmax_aging * 100;
 #else
@@ -500,7 +500,7 @@ static int bms_get_property(struct power_supply *psy,
 		val->intval = qmax;
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 		val->intval = 5020000;
 #else
 		if(gm.battery_id == 0 || gm.battery_id == 1)
@@ -603,7 +603,7 @@ void otg_thermal_limit(void)
 	}
 }
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 int get_charger_type(void);
 #endif
 
@@ -644,13 +644,13 @@ static int battery_get_property(struct power_supply *psy,
 		cycle_count = gm.bat_cycle;
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_TYPE:
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 		charger_dev_get_charger_type(primary_charger, &type);
 #else
 		type = get_charger_type();
 #endif
 		pr_err("ljj charger_dev_get_charger_type = %d\n",type);
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 		if (type > 3 || type < 0)
 #else
 		if (type > 9 || type < 0)
@@ -673,7 +673,7 @@ static int battery_get_property(struct power_supply *psy,
 			val->intval = data->BAT_CAPACITY;
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 		val->intval = 5020000;
 #else
 		if(gm.battery_id == 0 || gm.battery_id == 1)
@@ -694,7 +694,7 @@ static int battery_get_property(struct power_supply *psy,
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_FULL:
 		pr_err("gm.algo_qmax:%d gm.aging_factor:%d\n", gm.algo_qmax, gm.aging_factor);
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 		if (mtk_qmax_aging < 50200)
 			qmax = mtk_qmax_aging * 100;
 #else
@@ -753,7 +753,7 @@ static int battery_get_property(struct power_supply *psy,
 	case POWER_SUPPLY_PROP_BATTERY_TYPE:
 		val->intval = gm.battery_id;
 		break;
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 	case POWER_SUPPLY_PROP_BATTERY_VENDOR:
 		val->intval = gm.battery_id;
 		break;
@@ -783,7 +783,7 @@ static int battery_set_property(struct power_supply *psy,
 		charger_manager_set_input_suspend(val->intval);
 		break;
 	case POWER_SUPPLY_PROP_HIZ_ENABLE:
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
 		charger_manager_set_hiz_enable(val->intval);
 #endif
 		break;
@@ -4260,7 +4260,7 @@ static int battery_callback(
 	case CHARGER_NOTIFY_EOC:
 		{
 /* CHARGING FULL */
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 			if (force_get_tbat(true) < 45)
 #else
 			if (force_get_tbat(true) < 48)
@@ -4709,7 +4709,7 @@ static void otg_boost_limit_work(struct work_struct *work)
 	if (count_high > 888888)
 		count_high = 0;
 
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 	if (current_now > 3600000) {
 #else
 	if (current_now > 3400000) {
@@ -4721,7 +4721,7 @@ static void otg_boost_limit_work(struct work_struct *work)
 		count_high = 0;
 	}
 
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 	if (count_low >= 6)	{
 #else
 	if (count_low >= 3)	{
@@ -4729,7 +4729,7 @@ static void otg_boost_limit_work(struct work_struct *work)
 		charger_dev_set_otg_current(primary_charger, 1800000);
 		otg_ibat_limit = 0;
 		pr_err("dhx---set otg current 1.8A\n");
-#ifndef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifndef CONFIG_TARGET_PRODUCT_SELENE
 	} else if (count_high == 6)	{
 #else
 	} else if (count_high == 3)	{

@@ -7,14 +7,14 @@
 
 static enum EEPROM_I2C_DEV_IDX gi2c_dev_sel[IMGSENSOR_SENSOR_IDX_MAX_NUM] = {
 	I2C_DEV_IDX_1, /* main */
-#ifdef CONFIG_TARGET_PRODUCT_MERLINCOMMON
+#ifdef CONFIG_TARGET_PRODUCT_MERLIN
 	I2C_DEV_IDX_2, /* sub */
 #else
 	I2C_DEV_IDX_3, /* sub */
 #endif
 	I2C_DEV_IDX_3, /* main2 */
 	I2C_DEV_IDX_2, /* sub2 */
-#ifdef CONFIG_TARGET_PRODUCT_MERLINCOMMON
+#ifdef CONFIG_TARGET_PRODUCT_MERLIN
 	I2C_DEV_IDX_2, /* main3 */
 #else
 	I2C_DEV_IDX_1, /* main3 */

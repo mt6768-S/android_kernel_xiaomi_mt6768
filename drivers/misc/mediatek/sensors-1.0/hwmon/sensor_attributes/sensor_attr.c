@@ -134,7 +134,7 @@ int __init sensor_attr_init(void)
 		return err;
 	}
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
+#ifdef CONFIG_TARGET_PRODUCT_SELENE
     err = class_create_file(sensor_attr_class, &class_attr_architecture);
     if (err){
         printk(KERN_ERR "%s:Fail to create architecture class file\n", __func__);
