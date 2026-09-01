@@ -218,13 +218,6 @@ static int gf_get_gpio_dts_info(struct gf_device *gf_dev)
 	if (node) {
 		virq = irq_of_parse_and_map(node, 0);
 		gf_debug(ERR_LOG, "[gf][goodix_test] %s virq = %d\n", __func__, virq);
-#ifndef CONFIG_MTK_EIC
-		irq_set_irq_wake(virq, 1);
-		gf_debug(ERR_LOG, "[gf][goodix_test] %s CONFIG_MTK_EIC define\n", __func__);
-#else
-		enable_irq_wake(virq);
-		gf_debug(ERR_LOG, "[gf][goodix_test] %s CONFIG_MTK_EIC not define\n", __func__);
-#endif
 		pdev = of_find_device_by_node(node);
 		if (pdev) {
 			gf_dev->pinctrl_gpios = devm_pinctrl_get(&pdev->dev);
