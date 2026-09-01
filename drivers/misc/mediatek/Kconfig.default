@@ -137,7 +137,7 @@ config ANDROID_DEFAULT_SETTING
 	select JOYSTICK_XPAD
 	select JOYSTICK_XPAD_FF
 	select JOYSTICK_XPAD_LEDS
-	select KFENCE
+	#select KFENCE
 	select L2TP
 	select MAGIC_SYSRQ
 	select MD
@@ -245,7 +245,7 @@ config ANDROID_DEFAULT_SETTING
 	select QUOTA
 	select QUOTACTL
 	select RTC_CLASS
-	select SCHED_DEBUG
+	#select SCHED_DEBUG
 	select SECCOMP
 	select SECCOMP_FILTER
 	select SECURITY
@@ -499,7 +499,7 @@ config MTK_ANDROID_DEFAULT_SETTING
 	select SOCK_CGROUP_DATA
 	select STP
 	select SYNC
-	select SCHED_STACK_END_CHECK
+	#select SCHED_STACK_END_CHECK
 	select POWER_RESET
 	select SYSCON_REBOOT_MODE
 	select TCP_CONG_ADVANCED
