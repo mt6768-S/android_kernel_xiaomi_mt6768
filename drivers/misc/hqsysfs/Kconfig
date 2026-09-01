@@ -6,6 +6,10 @@ config TARGET_PRODUCT_MERLIN
   bool "merlin"
   default n
 
+config TARGET_PRODUCT_SELENE
+  bool "selene"
+  default n
+
 config HQ_SYSFS_SUPPORT
   bool "Enable Huaqin Sysfs Driver"
   default n
