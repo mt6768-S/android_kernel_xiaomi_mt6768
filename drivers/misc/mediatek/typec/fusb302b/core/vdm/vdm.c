@@ -54,7 +54,7 @@ FSC_S32 requestDiscoverIdentity(struct Port *port, SopType sop)
 {
     doDataObject_t __vdmh = { 0 };
     FSC_U32 __length = 1;
-    FSC_U32 __arr[__length ];
+	FSC_U32 __arr[10];
     PolicyState_t __n_pe;
     FSC_U32 i;
     for (i = 0; i < __length; i++)
@@ -135,7 +135,7 @@ FSC_S32 requestDiscoverSvids(struct Port *port, SopType sop)
 {
     doDataObject_t __vdmh = { 0 };
     FSC_U32 __length = 1;
-    FSC_U32 arr[__length ];
+	FSC_U32 arr[10];
     PolicyState_t __n_pe;
     FSC_U32 i;
     for (i = 0; i < __length; i++)
@@ -180,7 +180,7 @@ FSC_S32 requestDiscoverModes(struct Port *port, SopType sop, FSC_U16 svid)
 {
     doDataObject_t __vdmh = { 0 };
     FSC_U32 __length = 1;
-    FSC_U32 __arr[__length ];
+	FSC_U32 __arr[10];
     PolicyState_t __n_pe;
     FSC_U32 i;
     for (i = 0; i < __length; i++)
@@ -224,7 +224,7 @@ FSC_S32 requestSendAttention(struct Port *port, SopType sop, FSC_U16 svid,
 {
     doDataObject_t __vdmh = { 0 };
     FSC_U32 __length = 1;
-    FSC_U32 __arr[__length ];
+	FSC_U32 __arr[10];
     FSC_U32 i;
     for (i = 0; i < __length; i++)
     {
@@ -1121,7 +1121,7 @@ FSC_S32 requestEnterMode(struct Port *port, SopType sop, FSC_U16 svid,
 {
     doDataObject_t vdmh = { 0 };
     FSC_U32 length = 1;
-    FSC_U32 arr[length ];
+	FSC_U32 arr[10];
     PolicyState_t n_pe;
     FSC_U32 i;
     for (i = 0; i < length; i++)
@@ -1164,7 +1164,7 @@ FSC_S32 requestExitMode(struct Port *port, SopType sop, FSC_U16 svid,
 {
     doDataObject_t vdmh = { 0 };
     FSC_U32 length = 1;
-    FSC_U32 arr[length ];
+	FSC_U32 arr[10];
     PolicyState_t n_pe;
     FSC_U32 i;
     for (i = 0; i < length; i++)

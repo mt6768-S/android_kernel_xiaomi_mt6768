@@ -55,7 +55,7 @@ void StateMachineTypeC(struct Port *port)
         pr_info("FUSB bytes inta=%2x, intb=%2x, s0=%2x, s1=%2x, int=%2x\n",
             port->Registers.Status.byte[2],port->Registers.Status.byte[3],
             port->Registers.Status.byte[4],port->Registers.Status.byte[5],
-            port->Registers.Status.byte[6]);
+            port->Registers.Status.byte[6],port->ConnState);
     }
 
     if (port->USBPDActive)
@@ -480,7 +480,7 @@ void StateMachineAttachWaitSource(struct Port *port)
                   (port->VCONNTerm == CCTypeRa)))
         {
             /* One pin Rd */
-            if (VbusVSafe0V(port))
+            if(1)
             {
 #ifdef FSC_HAVE_DRP
                 if (port->PortConfig.SnkPreferred)
@@ -955,7 +955,7 @@ void StateMachineTryWaitSource(struct Port *port)
 
     debounceCC(port);
 
-    if (VbusVSafe0V(port))
+    if(!isVBUSOverVoltage(port, VBUS_MV_VSAFE0V + VBUS_MV_VSAFE0V))
     {
         if (((port->CCTermPDDebounce >= CCTypeRdUSB) &&
              (port->CCTermPDDebounce < CCTypeUndefined)) &&
@@ -1191,12 +1191,13 @@ void SetStateDebugAccessorySink(struct Port *port)
     SetTypeCState(port, DebugAccessorySink);
     setStateSink(port);
 
+	notify_observers(CUSTOM_SRC, port->I2cAddr, 0);
+
     port->Registers.Measure.MEAS_VBUS = 1;
     port->Registers.Measure.MDAC = (port->DetachThreshold / MDAC_MV_LSB) - 1;
     DeviceWrite(port->I2cAddr, regMeasure, 1, &port->Registers.Measure.byte);
 
     /* TODO RICK platform_double_56k_cable()? */
-	notify_observers(CUSTOM_SRC, port->I2cAddr, 0);
     TimerStart(&port->StateTimer, tOrientedDebug);
 }
 #endif /* FSC_HAVE_SNK */
@@ -1315,15 +1316,15 @@ void SetStateAttachedSink(struct Port *port)
 
     setStateSink(port);
 
+	port->CCTerm = DecodeCCTerminationSink(port);
+	UpdateSinkCurrent(port, port->CCTerm);
+
     if (!port->IsPRSwap)
 		notify_observers((port->CCPin == CC1) ? CC1_ORIENT : CC2_ORIENT,
 			port->I2cAddr, 0);
     /*K19A-104 add by wangchao at 2021/4/10 start*/
     typec_cc_orientation = (port->CCPin == CC1) ? CC1_ORIENT : CC2_ORIENT;
     /*K19A-104 add by wangchao at 2021/4/10 end*/
-
-    port->CCTerm = DecodeCCTerminationSink(port);
-    UpdateSinkCurrent(port, port->CCTerm);
 
     USBPDEnable(port, TRUE, SINK);
     TimerDisable(&port->StateTimer);
