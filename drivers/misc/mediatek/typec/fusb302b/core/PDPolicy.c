@@ -506,6 +506,15 @@ void PolicySourceSendSoftReset(struct Port *port)
 #ifdef FSC_HAVE_VDM
                 port->discoverIdCounter = 0;
 #endif /* FSC_HAVE_VDM */
+				if (port->PolicyRxHeader.PortDataRole == port->PolicyIsDFP) {
+					// partner has same DATA role
+					port->PolicyIsDFP =
+							(port->PolicyIsDFP == TRUE) ? FALSE : TRUE;
+					port->Registers.Switches.DATAROLE = port->PolicyIsDFP;
+					DeviceWrite(port->I2cAddr, regSwitches1, 1,
+								&port->Registers.Switches.byte[1]);
+					notify_observers(DATA_ROLE, port->I2cAddr, 0);
+				}
                 SetPEState(port, peSourceDiscovery);
             }
             else
@@ -1516,6 +1525,7 @@ void PolicySourceSendDRSwap(struct Port *port)
                         DeviceWrite(port->I2cAddr, regControl1, 1,
                                     &port->Registers.Control.byte[1]);
                     }
+					notify_observers(DATA_ROLE, port->I2cAddr, NULL);
                     /* Fall through */
                 case CMTReject:
                     SetPEState(port, peSourceReady);
@@ -1567,6 +1577,7 @@ void PolicySourceEvaluateDRSwap(struct Port *port)
             port->Registers.Switches.DATAROLE = port->PolicyIsDFP;
             DeviceWrite(port->I2cAddr, regSwitches1, 1,
                     &port->Registers.Switches.byte[1]);
+			notify_observers(DATA_ROLE, port->I2cAddr, NULL);
 
             if (port->PdRevSop == USBPDSPECREV2p0)
             {
@@ -1945,6 +1956,7 @@ void PolicySourceSendPRSwap(struct Port *port)
             DeviceWrite(port->I2cAddr, regSwitches1, 1,
                     &port->Registers.Switches.byte[1]);
             port->PolicySubIndex++;
+			notify_observers(POWER_ROLE, port->I2cAddr, NULL);
         }
         else if (TimerExpired(&port->PolicyStateTimer))
         {
@@ -2071,7 +2083,6 @@ void PolicySourceEvaluatePRSwap(struct Port *port)
             platform_set_vbus_lvl_enable(port->PortID, VBUS_LVL_ALL,
                                          FALSE, FALSE);
             platform_set_vbus_discharge(port->PortID, TRUE);
-			notify_observers(POWER_ROLE, port->I2cAddr, NULL);
             TimerStart(&port->PolicyStateTimer, tPSHardResetMax + tSafe0V);
             port->PolicySubIndex++;
         }
@@ -2089,6 +2100,7 @@ void PolicySourceEvaluatePRSwap(struct Port *port)
             port->Registers.Switches.POWERROLE = port->PolicyIsSource;
             DeviceWrite(port->I2cAddr, regSwitches1, 1,
                     &port->Registers.Switches.byte[1]);
+			notify_observers(POWER_ROLE, port->I2cAddr, NULL);
             port->PolicySubIndex++;
         }
         else if (TimerExpired(&port->PolicyStateTimer))
@@ -2138,6 +2150,7 @@ void PolicySourceEvaluatePRSwap(struct Port *port)
                 case CMTPS_RDY:
                     port->PolicySubIndex++;
                     port->IsPRSwap = FALSE;
+					notify_observers(POWER_ROLE, port->I2cAddr, NULL);
                     TimerStart(&port->PolicyStateTimer, tGoodCRCDelay);
                     break;
                 default:
@@ -2310,6 +2323,16 @@ void PolicySinkSendSoftReset(struct Port *port)
 #ifdef FSC_HAVE_VDM
                 port->discoverIdCounter = 0;
 #endif /* FSC_HAVE_VDM */
+				if (port->PolicyRxHeader.PortDataRole == port->PolicyIsDFP) {
+					// partner has same DATA role
+					port->PolicyIsDFP =
+							(port->PolicyIsDFP == TRUE) ? FALSE : TRUE;
+					port->Registers.Switches.DATAROLE = port->PolicyIsDFP;
+					DeviceWrite(port->I2cAddr, regSwitches1, 1,
+								&port->Registers.Switches.byte[1]);
+					notify_observers(DATA_ROLE, port->I2cAddr, 0);
+				}
+
                 SetPEState(port, peSinkWaitCaps);
                 TimerStart(&port->PolicyStateTimer, tSinkWaitCap);
             }
@@ -2391,11 +2414,11 @@ void PolicySinkTransitionDefault(struct Port *port)
 
             /* Set up VBus measure interrupt to watch for vSafe5V */
             port->Registers.Measure.MEAS_VBUS = 1;
-            port->Registers.Measure.MDAC = VBUS_MDAC_4P62;
+            port->Registers.Measure.MDAC = VBUS_MDAC_4P20;
             DeviceWrite(port->I2cAddr, regMeasure, 1,
                         &port->Registers.Measure.byte);
 
-            TimerStart(&port->PolicyStateTimer, tSrcRecoverMax + tSrcTurnOn);
+            TimerStart(&port->PolicyStateTimer, tSrcRecoverMax + tSrcTurnOn - 400 * TICK_SCALE_TO_MS);
         }
         else if (TimerExpired(&port->PolicyStateTimer))
         {
@@ -2410,11 +2433,13 @@ void PolicySinkTransitionDefault(struct Port *port)
         break;
     case 2:
         if (port->Registers.Status.I_COMP_CHNG &&
-            isVBUSOverVoltage(port, VBUS_MV_VSAFE5V_L))
+            isVBUSOverVoltage(port, VBUS_MV_VSAFE5V_L- MDAC_MV_LSB))
         {
             TimerDisable(&port->PolicyStateTimer);
 
             port->PolicySubIndex++;
+            SetPEState(port, peSinkStartup);
+            PolicySinkStartup(port);
         }
         else if (TimerExpired(&port->PolicyStateTimer))
         {
@@ -2501,6 +2526,7 @@ void PolicySinkStartup(struct Port *port)
     port->CollisionCounter = 0;
     TimerDisable(&port->PolicyStateTimer);
     SetPEState(port, peSinkDiscovery);
+	PolicySinkDiscovery(port);
 
 #ifdef FSC_HAVE_VDM
     port->mode_entered = FALSE;
@@ -2529,6 +2555,7 @@ void PolicySinkDiscovery(struct Port *port)
 
         SetPEState(port, peSinkWaitCaps);
         TimerStart(&port->PolicyStateTimer, tTypeCSinkWaitCap);
+		PolicySinkWaitCaps(port);
     }
     else
     {
@@ -3271,6 +3298,7 @@ void PolicySinkSendDRSwap(struct Port *port)
                         DeviceWrite(port->I2cAddr, regControl1, 1,
                                     &port->Registers.Control.byte[1]);
                     }
+					notify_observers(DATA_ROLE, port->I2cAddr, NULL);
                     /* Fall through */
                 case CMTReject:
                     SetPEState(port, peSinkReady);
@@ -3723,7 +3751,7 @@ void PolicySinkSendPRSwap(struct Port *port)
         {
             /* Delay once VBus is present for potential switch delay. */
             TimerStart(&port->PolicyStateTimer, tVBusSwitchDelay);
-
+			notify_observers(POWER_ROLE, port->I2cAddr, NULL);
             port->PolicySubIndex++;
         }
         else
@@ -3804,7 +3832,6 @@ void PolicySinkEvaluatePRSwap(struct Port *port)
                 {
                 case CMTPS_RDY:
                     RoleSwapToAttachedSource(port);
-                    notify_observers(POWER_ROLE, port->I2cAddr, 0);
                     port->PolicyIsSource = TRUE;
                     port->Registers.Switches.POWERROLE = port->PolicyIsSource;
                     DeviceWrite(port->I2cAddr, regSwitches1, 1,
@@ -3834,7 +3861,7 @@ void PolicySinkEvaluatePRSwap(struct Port *port)
         {
             /* Delay once VBus is present for potential switch delay. */
             TimerStart(&port->PolicyStateTimer, tVBusSwitchDelay);
-
+			notify_observers(POWER_ROLE, port->I2cAddr, NULL);
             port->PolicySubIndex++;
         }
         else
