@@ -2444,12 +2444,15 @@ static int mtk_charger_parse_dt(struct charger_manager *info,
 		chr_err("found SwitchCharging\n");
 		mtk_switch_charging_init(info);
 	}
-#ifdef CONFIG_MTK_DUAL_CHARGER_SUPPORT
+
 	if (strcmp(info->algorithm_name, "DualSwitchCharging") == 0) {
 		pr_debug("found DualSwitchCharging\n");
+#if !defined(CONFIG_MTK_DUAL_CHARGER_SUPPORT)
+		mtk_switch_charging_init(info);
+#else
 		mtk_dual_switch_charging_init(info);
-	}
 #endif
+	}
 
 	info->disable_charger = of_property_read_bool(np, "disable_charger");
 	info->enable_sw_safety_timer =
