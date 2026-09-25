@@ -1260,12 +1260,23 @@ static bool uname_spoof_wanted(void)
 	return false;
 }
 
-/* "4.19.325-extra" -> "5.4.325-extra": SUBLEVEL and the tail are kept. */
+/*
+ * "4.19.325-extra" -> "5.4.325-extra": SUBLEVEL and the tail are kept.
+ * Only ever raises the reported version - if this tree is later rebased onto
+ * 5.4 or newer the real release is already good enough and is left alone,
+ * so the helper can never talk the version down.
+ */
 static void uname_spoof_release(char *release, size_t len)
 {
 	char buf[__NEW_UTS_LEN + 1];
 	const char *tail = release;
+	unsigned int major, minor;
 	int dots = 0;
+
+	if (sscanf(release, "%u.%u", &major, &minor) != 2)
+		return;
+	if (major > 5 || (major == 5 && minor >= 4))
+		return;
 
 	while (*tail && dots < 2) {
 		if (*tail == '.')
