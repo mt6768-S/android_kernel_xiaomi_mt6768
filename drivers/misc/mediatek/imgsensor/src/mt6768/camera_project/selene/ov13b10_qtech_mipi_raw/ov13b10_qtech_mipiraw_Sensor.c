@@ -149,14 +149,14 @@ static struct imgsensor_info_struct imgsensor_info = {
 	.ihdr_le_firstline = 0,
 	.sensor_mode_num = 6,	//support sensor mode num
 
-	.cap_delay_frame = 2,	//enter capture delay frame num
+	.cap_delay_frame = 3,	//enter capture delay frame num
 	.pre_delay_frame = 2,	//enter preview delay frame num
 	.video_delay_frame = 2,	//enter video delay frame num
 	.hs_video_delay_frame = 2,	//enter high speed video  delay frame num
 	.slim_video_delay_frame = 2,	//enter slim video delay frame num
 	.custom1_delay_frame = 2,
 
-	.isp_driving_current = ISP_DRIVING_6MA,	//8MA
+	.isp_driving_current = ISP_DRIVING_4MA,	//8MA
 	.sensor_interface_type = SENSOR_INTERFACE_TYPE_MIPI,
 	.mipi_sensor_type = MIPI_OPHY_NCSI2,
 	.mipi_settle_delay_mode = 1,
@@ -176,7 +176,7 @@ static struct imgsensor_struct imgsensor = {
 	.dummy_line = 0,
 	.current_fps = 300,
 	.autoflicker_en = KAL_FALSE,
-	.test_pattern = KAL_TRUE,
+	.test_pattern = KAL_FALSE,
 	.current_scenario_id = MSDK_SCENARIO_ID_CAMERA_PREVIEW,
 	.ihdr_en = 0,
 	.i2c_write_id = 0x20,
@@ -1818,7 +1818,7 @@ static kal_uint32 open(void)
 	imgsensor.dummy_pixel = 0;
 	imgsensor.dummy_line = 0;
 	imgsensor.ihdr_en = 0;
-	imgsensor.test_pattern = KAL_TRUE;
+	imgsensor.test_pattern = KAL_FALSE;
 	imgsensor.current_fps = imgsensor_info.pre.max_framerate;
 	imgsensor.pdaf_mode = 0;
 	spin_unlock(&imgsensor_drv_lock);

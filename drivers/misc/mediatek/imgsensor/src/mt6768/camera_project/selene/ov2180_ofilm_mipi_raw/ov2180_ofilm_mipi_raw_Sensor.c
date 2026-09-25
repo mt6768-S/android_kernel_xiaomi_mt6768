@@ -77,7 +77,7 @@ static struct imgsensor_info_struct imgsensor_info = {
 			.grabwindow_width = 1600,
 			.grabwindow_height = 1200,
 			.mipi_data_lp2hs_settle_dc = 85,	//unit , ns
-			.max_framerate = 300,	//less than 13M(include 13M),cap1 max framerate is 24fps,16M max framerate is 20fps, 20M max framerate is 15fps
+			.max_framerate = 240,	//less than 13M(include 13M),cap1 max framerate is 24fps,16M max framerate is 20fps, 20M max framerate is 15fps
 		},
 	.normal_video = {			/*normal capture */
 			.pclk = 66000000,
@@ -140,15 +140,14 @@ static struct imgsensor_info_struct imgsensor_info = {
 	.slim_video_delay_frame = 2,	//enter slim video delay frame num
     .custom1_delay_frame = 2,
 
-	.isp_driving_current = ISP_DRIVING_4MA,	//mclk driving current
+	.isp_driving_current = ISP_DRIVING_2MA,	//mclk driving current
 	.sensor_interface_type = SENSOR_INTERFACE_TYPE_MIPI,	//sensor_interface_type
 	.mipi_sensor_type = MIPI_OPHY_NCSI2,	//0,MIPI_OPHY_NCSI2;  1,MIPI_OPHY_CSI2
 	.mipi_settle_delay_mode = MIPI_SETTLEDELAY_AUTO,	//0,MIPI_SETTLEDELAY_AUTO; 1,MIPI_SETTLEDELAY_MANNUAL
 	.sensor_output_dataformat = SENSOR_OUTPUT_FORMAT_RAW_MONO,	//sensor output first pixel color
 	.mclk = 24,					//mclk value, suggest 24 or 26 for 24Mhz or 26Mhz
 	.mipi_lane_num = SENSOR_MIPI_1_LANE,	//mipi lane num
-	.i2c_addr_table = {0x6c, 0x6d, 0xff},
-	.i2c_speed = 400,	//record sensor support all write id addr, only supprt 4must end with 0xff
+	.i2c_addr_table = {0x6c, 0x6d, 0xff},	//record sensor support all write id addr, only supprt 4must end with 0xff
 };
 
 static struct imgsensor_struct imgsensor = {
@@ -160,7 +159,7 @@ static struct imgsensor_struct imgsensor = {
 	.dummy_line = 0,			//current dummyline
 	.current_fps = 300,			//full size current fps : 24fps for PIP, 30fps for Normal or ZSD
 	.autoflicker_en = KAL_FALSE,	//auto flicker enable: KAL_FALSE for disable auto flicker, KAL_TRUE for enable auto flicker
-	.test_pattern = KAL_TRUE,	//test pattern mode or not. KAL_FALSE for in test pattern mode, KAL_TRUE for normal output
+	.test_pattern = KAL_FALSE,	//test pattern mode or not. KAL_FALSE for in test pattern mode, KAL_TRUE for normal output
 	.current_scenario_id = MSDK_SCENARIO_ID_CAMERA_PREVIEW,	//current scenario id
 	.ihdr_en = 0,				//sensor need support LE, SE with HDR feature
 	.i2c_write_id = 0x6c,		//record current sensor's i2c write id
@@ -1086,7 +1085,7 @@ static kal_uint32 open(void)
 	imgsensor.dummy_pixel = 0;
 	imgsensor.dummy_line = 0;
 	imgsensor.ihdr_en = 0;
-	imgsensor.test_pattern = KAL_TRUE;
+	imgsensor.test_pattern = KAL_FALSE;
 	imgsensor.current_fps = imgsensor_info.pre.max_framerate;
 	spin_unlock(&imgsensor_drv_lock);
 

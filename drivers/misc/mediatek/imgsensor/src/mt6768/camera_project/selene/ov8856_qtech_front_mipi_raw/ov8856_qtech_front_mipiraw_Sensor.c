@@ -138,20 +138,20 @@ static imgsensor_info_struct imgsensor_info = {
 	.ihdr_le_firstline = 0,  //1,le first ; 0, se first
 	.sensor_mode_num = 5,	  //support sensor mode num ,don't support Slow motion
 
-	.cap_delay_frame = 2,		//enter capture delay frame num
-	.pre_delay_frame = 2,		//enter preview delay frame num
-	.video_delay_frame = 2,		//enter video delay frame num
-	.hs_video_delay_frame = 2,	//enter high speed video  delay frame num
-	.slim_video_delay_frame = 2,//enter slim video delay frame num
+	.cap_delay_frame = 3,		//enter capture delay frame num
+	.pre_delay_frame = 3,		//enter preview delay frame num
+	.video_delay_frame = 3,		//enter video delay frame num
+	.hs_video_delay_frame = 3,	//enter high speed video  delay frame num
+	.slim_video_delay_frame = 3,//enter slim video delay frame num
 
-	.isp_driving_current = ISP_DRIVING_6MA, //mclk driving current
+	.isp_driving_current = ISP_DRIVING_2MA, //mclk driving current
 	.sensor_interface_type = SENSOR_INTERFACE_TYPE_MIPI,//sensor_interface_type
    .mipi_sensor_type = MIPI_OPHY_NCSI2, //0,MIPI_OPHY_NCSI2;  1,MIPI_OPHY_CSI2
    .mipi_settle_delay_mode = MIPI_SETTLEDELAY_MANUAL,//0,MIPI_SETTLEDELAY_AUTO; 1,MIPI_SETTLEDELAY_MANNUAL
 	.sensor_output_dataformat = SENSOR_OUTPUT_FORMAT_RAW_B,//sensor output first pixel color
 	.mclk = 24,//mclk value, suggest 24 or 26 for 24Mhz or 26Mhz
 	.mipi_lane_num = SENSOR_MIPI_4_LANE,//mipi lane num
-	.i2c_addr_table = {0x20, 0x21, 0xff},
+	.i2c_addr_table = {0x20, 0x21, 0xff},//record sensor support all write id addr, only supprt 4must end with 0xff
 };
 
 
@@ -162,9 +162,9 @@ static imgsensor_struct imgsensor = {
 	.gain = 0x200,						//current gain
 	.dummy_pixel = 0,					//current dummypixel
 	.dummy_line = 0,					//current dummyline
-	.current_fps = 300,	/* full size current fps : 24fps for PIP, 30fps for Normal or ZSD */
+	.current_fps = 30,	/* full size current fps : 24fps for PIP, 30fps for Normal or ZSD */
 	.autoflicker_en = KAL_FALSE,  //auto flicker enable: KAL_FALSE for disable auto flicker, KAL_TRUE for enable auto flicker
-	.test_pattern = KAL_TRUE,		//test pattern mode or not. KAL_FALSE for in test pattern mode, KAL_TRUE for normal output
+	.test_pattern = KAL_FALSE,		//test pattern mode or not. KAL_FALSE for in test pattern mode, KAL_TRUE for normal output
 	.current_scenario_id = MSDK_SCENARIO_ID_CAMERA_PREVIEW,//current scenario id
 	.ihdr_en = 0, //sensor need support LE, SE with HDR feature
 	.i2c_write_id = 0x20,//record current sensor's i2c write id
@@ -1359,7 +1359,7 @@ static kal_uint32 open(void)
 	imgsensor.dummy_pixel = 0;
 	imgsensor.dummy_line = 0;
 	imgsensor.ihdr_en = 0;
-	imgsensor.test_pattern = KAL_TRUE;
+	imgsensor.test_pattern = KAL_FALSE;
 	imgsensor.current_fps = imgsensor_info.pre.max_framerate;
 	spin_unlock(&imgsensor_drv_lock);
 

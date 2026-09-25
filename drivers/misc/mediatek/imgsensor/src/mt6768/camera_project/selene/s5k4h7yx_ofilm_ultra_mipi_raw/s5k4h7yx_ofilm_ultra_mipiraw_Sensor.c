@@ -141,11 +141,11 @@ static struct imgsensor_info_struct imgsensor_info = {
 	.ihdr_le_firstline = 0,	/* 1,le first ; 0, se first */
 	.sensor_mode_num = 5,	/* support sensor mode num */
 
-	.cap_delay_frame = 2,
-	.pre_delay_frame = 2,
-	.video_delay_frame = 2,
-	.hs_video_delay_frame = 2,
-	.slim_video_delay_frame = 2,
+	.cap_delay_frame = 3,
+	.pre_delay_frame = 3,
+	.video_delay_frame = 3,
+	.hs_video_delay_frame = 3,
+	.slim_video_delay_frame = 3,
 
 	.isp_driving_current = ISP_DRIVING_6MA,
 	.sensor_interface_type = SENSOR_INTERFACE_TYPE_MIPI,
@@ -165,9 +165,9 @@ static struct imgsensor_struct imgsensor = {
 	.gain = 0x100,		/* current gain */
 	.dummy_pixel = 0,	/* current dummypixel */
 	.dummy_line = 0,	/* current dummyline */
-	.current_fps = 300,	/* full size current fps : 24fps for PIP, 30fps for Normal or ZSD */
+	.current_fps = 0,	/* full size current fps : 24fps for PIP, 30fps for Normal or ZSD */
 	.autoflicker_en = KAL_FALSE,	/* auto flicker enable: KAL_FALSE for disable auto flicker, KAL_TRUE for enable auto flicker */
-	.test_pattern = KAL_TRUE,	/* test pattern mode or not. KAL_FALSE for in test pattern mode, KAL_TRUE for normal output */
+	.test_pattern = KAL_FALSE,	/* test pattern mode or not. KAL_FALSE for in test pattern mode, KAL_TRUE for normal output */
 	.current_scenario_id = MSDK_SCENARIO_ID_CAMERA_PREVIEW,	/* current scenario id */
 	.ihdr_en = 0,		/* sensor need support LE, SE with HDR feature */
 	.i2c_write_id = 0x5A,
@@ -1094,7 +1094,7 @@ static kal_uint32 open(void)
 	imgsensor.dummy_pixel = 0;
 	imgsensor.dummy_line = 0;
 	imgsensor.ihdr_en = 0;
-	imgsensor.test_pattern = KAL_TRUE;
+	imgsensor.test_pattern = KAL_FALSE;
 	imgsensor.current_fps = imgsensor_info.pre.max_framerate;
 	spin_unlock(&imgsensor_drv_lock);
 

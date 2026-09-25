@@ -204,7 +204,7 @@ static struct imgsensor_info_struct imgsensor_info = {
 		/*	 following for MIPIDataLowPwr2HighSpeedSettleDelayCount by different scenario	*/
 		.mipi_data_lp2hs_settle_dc = 85,
 		/*	 following for GetDefaultFramerateByScenario()	*/
-		.max_framerate = 300,
+		.max_framerate = 240,
 		.mipi_pixel_rate = 480000000,
 	},
 	.custom2 = {	//Copy from pre
@@ -218,7 +218,7 @@ static struct imgsensor_info_struct imgsensor_info = {
 		/*	 following for MIPIDataLowPwr2HighSpeedSettleDelayCount by different scenario	*/
 		.mipi_data_lp2hs_settle_dc = 85,
 		/*	 following for GetDefaultFramerateByScenario()	*/
-		.max_framerate = 300,
+		.max_framerate = 240,
 		.mipi_pixel_rate = 227200000,
 	},
 
@@ -244,14 +244,14 @@ static struct imgsensor_info_struct imgsensor_info = {
 	.ihdr_le_firstline = 0,	/* 1,le first ; 0, se first */
 	.sensor_mode_num = 5,	/* support sensor mode num */
 
-	.cap_delay_frame = 2,	/* enter capture delay frame num */
-	.pre_delay_frame = 2,	/* enter preview delay frame num */
-	.video_delay_frame = 2,	/* enter video delay frame num */
+	.cap_delay_frame = 3,	/* enter capture delay frame num */
+	.pre_delay_frame = 3,	/* enter preview delay frame num */
+	.video_delay_frame = 3,	/* enter video delay frame num */
 
 	/* enter high speed video  delay frame num */
-	.hs_video_delay_frame = 2,
+	.hs_video_delay_frame = 3,
 
-	.slim_video_delay_frame = 2,	/* enter slim video delay frame num */
+	.slim_video_delay_frame = 3,	/* enter slim video delay frame num */
 
 	.custom1_delay_frame = 2,	/* Dual camera frame sync control */
 	.custom1_delay_frame = 2,	/* Dual camera frame sync control */
@@ -289,7 +289,7 @@ static struct imgsensor_struct imgsensor = {
 	.gain = 0x100,		/* current gain */
 	.dummy_pixel = 0,	/* current dummypixel */
 	.dummy_line = 0,	/* current dummyline */
-	.current_fps = 300,	/* full size current fps : 24fps for PIP,
+	.current_fps = 0,	/* full size current fps : 24fps for PIP,
 				 * 30fps for Normal or ZSD
 				 */
 
@@ -302,7 +302,7 @@ static struct imgsensor_struct imgsensor = {
 		 * KAL_FALSE for in test pattern mode,
 		 * KAL_TRUE for normal output
 		 */
-	.test_pattern = KAL_TRUE,
+	.test_pattern = KAL_FALSE,
 
 	/* current scenario id */
 	.current_scenario_id = MSDK_SCENARIO_ID_CAMERA_PREVIEW,
@@ -1740,7 +1740,7 @@ static kal_uint32 open(void)
 	imgsensor.dummy_pixel = 0;
 	imgsensor.dummy_line = 0;
 	imgsensor.ihdr_mode = 0;
-	imgsensor.test_pattern = KAL_TRUE;
+	imgsensor.test_pattern = KAL_FALSE;
 	imgsensor.current_fps = imgsensor_info.pre.max_framerate;
 	spin_unlock(&imgsensor_drv_lock);
 
