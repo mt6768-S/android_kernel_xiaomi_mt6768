@@ -191,4 +191,7 @@ config TOUCHSCREEN_GOODIX_BRL
 	  If unsure, say N.
 source "drivers/input/touchscreen/mediatek/goodix_berlin_driver/Kconfig"
 
+source "drivers/input/touchscreen/mediatek/NT36xxx_SPI/Kconfig"
+source "drivers/input/touchscreen/mediatek/focaltech_touch_k19a/Kconfig"
+
 endif
