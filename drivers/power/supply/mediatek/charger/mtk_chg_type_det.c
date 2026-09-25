@@ -163,6 +163,19 @@ struct mt_charger {
 	enum charger_type chg_type;
 };
 
+
+/*
+ * selene: Xiaomi reverse wired charging (pinctrl D+/D- short, tcpc role
+ * switching) is not ported.  Provide the symbols its callers expect.
+ * reverse_charger() does nothing: usb20_host only ever asks it to turn
+ * reverse charging off, which is harmless since it is never turned on.
+ */
+int reverse_flage;
+uint8_t typec_cc_orientation;
+void reverse_charger(bool en)
+{
+}
+
 static int mt_charger_online(struct mt_charger *mtk_chg)
 {
 	int ret = 0;
