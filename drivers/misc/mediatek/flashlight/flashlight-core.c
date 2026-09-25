@@ -110,6 +110,13 @@ static int fl_set_level(struct flashlight_dev *fdev, int level)
 					level);
 		}
 
+	if (fdev->need_cooler)
+		if (fdev->cooler_level >= 0 && level > fdev->cooler_level) {
+			level = fdev->cooler_level;
+			pr_info("Set level to (%d) since thermal need cooler\n",
+					level);
+		}
+
 	/* ioctl */
 	fl_dev_arg.channel = fdev->dev_id.channel;
 	fl_dev_arg.arg = level;
@@ -124,6 +131,70 @@ static int fl_set_level(struct flashlight_dev *fdev, int level)
 
 	return 0;
 }
+
+/* Thermal cooler hooks, taken from the Xiaomi selene tree (skyron-s). */
+int flashlight_get_max_duty(void)
+{
+	struct flashlight_dev *fdev;
+	struct flashlight_dev_arg fl_dev_arg;
+	int duty_num = -1;
+
+	mutex_lock(&fl_mutex);
+	list_for_each_entry(fdev, &flashlight_list, node) {
+		if (!fdev->ops)
+			continue;
+
+		fdev->ops->flashlight_open();
+		fdev->ops->flashlight_set_driver(1);
+		fl_dev_arg.channel = fdev->dev_id.channel;
+		fdev->ops->flashlight_ioctl(
+				FLASH_IOC_GET_DUTY_NUMBER,
+				(unsigned long)&fl_dev_arg);
+		if (fl_dev_arg.arg > duty_num)
+			duty_num = fl_dev_arg.arg;
+		fdev->ops->flashlight_set_driver(0);
+		fdev->ops->flashlight_release();
+	}
+	mutex_unlock(&fl_mutex);
+
+	pr_info("get max duty:%d\n", duty_num - 1);
+
+	return duty_num - 1;
+}
+EXPORT_SYMBOL(flashlight_get_max_duty);
+
+int flashlight_set_cooler_level(int level)
+{
+	struct flashlight_dev *fdev;
+
+	if (level < 0) {
+		pr_info("Failed to set level:%d\n", level);
+		return -1;
+	}
+
+	pr_info("cooler level:%d\n", level);
+
+	mutex_lock(&fl_mutex);
+	list_for_each_entry(fdev, &flashlight_list, node) {
+		if (!fdev->ops)
+			continue;
+
+		fdev->ops->flashlight_open();
+		fdev->ops->flashlight_set_driver(1);
+		fdev->need_cooler = 1;
+		fdev->cooler_level = level;
+		if (fdev->enable && (fdev->level > fdev->cooler_level))
+			fl_set_level(fdev, fdev->cooler_level);
+		else if (fdev->enable && (fdev->level <= fdev->cooler_level))
+			fl_set_level(fdev, fdev->level);
+		fdev->ops->flashlight_set_driver(0);
+		fdev->ops->flashlight_release();
+	}
+	mutex_unlock(&fl_mutex);
+
+	return 0;
+}
+EXPORT_SYMBOL(flashlight_set_cooler_level);
 
 static int fl_enable(struct flashlight_dev *fdev, int enable)
 {
