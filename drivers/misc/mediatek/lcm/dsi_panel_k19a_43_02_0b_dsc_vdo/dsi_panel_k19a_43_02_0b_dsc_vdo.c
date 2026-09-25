@@ -24,7 +24,8 @@
 
 #include "lcm_drv.h"
 /* Huaqin add for K19A-315 by feiwen at 2021/06/16 start */
-#include "../../../../input/touchscreen/mediatek/NT36xxx_SPI/nt36xxx.h"
+/* NT36xxx_SPI driver is not present in this base; the only symbol used
+ * from that header (nvt_gesture_flag) is declared extern below. */
 /* Huaqin add for K19A-315 by feiwen at 2021/06/16 end */
 /* Huaqin add for HQ-142518 by feiwen at 2021/06/24 start */
 #include "mtk_boot_common.h"
