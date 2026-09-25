@@ -807,6 +807,14 @@ static inline int nla_parse_nested(struct nlattr *tb[], int maxtype,
 			 extack);
 }
 
+/* 5.2 split netlink parsing into a strict nla_parse() and a lenient
+ * nla_parse_deprecated().  This base predates that split, so the plain
+ * names here are already the lenient ones - alias the newer spellings so
+ * drivers written against the post-5.2 API build unchanged.
+ */
+#define nla_parse_deprecated(tb, maxtype, head, len, policy, extack) 	nla_parse(tb, maxtype, head, len, policy, extack)
+#define nla_parse_nested_deprecated(tb, maxtype, nla, policy, extack) 	nla_parse_nested(tb, maxtype, nla, policy, extack)
+
 /**
  * nla_put_u8 - Add a u8 netlink attribute to a socket buffer
  * @skb: socket buffer to add attribute to
