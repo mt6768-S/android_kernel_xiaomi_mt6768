@@ -306,6 +306,7 @@ static struct LCM_setting_table init_setting_vdo[] = {
 
         {0x11, 0, {} },
 	{0x11, 0, {} },
+        {REGFLAG_DELAY, 70, {} },
         {0x29, 0, {} },
 };
 
@@ -678,6 +679,7 @@ static void lcm_resume_power(void)
 
 static void lcm_init(void)
 {
+      	SET_RESET_PIN(0);
       	MDELAY(5);
       	SET_RESET_PIN(1);
       	MDELAY(10);
