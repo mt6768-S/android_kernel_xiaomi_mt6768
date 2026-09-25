@@ -224,6 +224,55 @@ int32_t nvt_esd_vdd_tp_recovery(void)
 EXPORT_SYMBOL(nvt_esd_vdd_tp_recovery);
 
 #endif /* NVT_TOUCH_VDD_TP_RECOVERY */
+/* Huaqin modify for HQ-144782 by caogaojie at 2021/07/05 end */
+
+/* Huaqin modify for HQ-131657 by feiwen at 2021/06/03 start */
+static int32_t nvt_ts_resume(struct device *dev);
+
+#if TP_RESUME_EN
+
+#define TP_RESUME_WAIT_TIME             20
+static struct delayed_work nvt_resume_work;
+static struct workqueue_struct *nvt_resume_workqueue;
+
+static void nvt_resume_func(struct work_struct *work)
+{
+	NVT_LOG("Enter %s", __func__);
+	nvt_ts_resume(&ts->client->dev);
+}
+
+void nvt_resume_queue_work(void)
+{
+	/* Huaqin modify for HQ-139605 by feiwen at 2021/06/09 start */
+	flush_workqueue(nvt_resume_workqueue);
+	/* Huaqin modify for HQ-139605 by feiwen at 2021/06/09 end */
+	queue_delayed_work(nvt_resume_workqueue, &nvt_resume_work, msecs_to_jiffies(TP_RESUME_WAIT_TIME));
+}
+#endif
+/* Huaqin modify for HQ-131657 by feiwen at 2021/06/03 end */
+
+/* Huaqin modify for HQ-131657 by liunianliang at 2021/06/16 start */
+#if TP_SUSPEND_EN
+static int32_t nvt_ts_suspend(struct device *dev);
+
+#define TP_SUSPEND_WAIT_TIME             10
+static struct delayed_work nvt_suspend_work;
+static struct workqueue_struct *nvt_suspend_workqueue;
+
+static void nvt_suspend_func(struct work_struct *work)
+{
+	NVT_LOG("Enter %s", __func__);
+	nvt_ts_suspend(&ts->client->dev);
+}
+
+void nvt_suspend_queue_work(void)
+{
+	flush_workqueue(nvt_suspend_workqueue);
+	queue_delayed_work(nvt_suspend_workqueue, &nvt_suspend_work, msecs_to_jiffies(TP_SUSPEND_WAIT_TIME));
+}
+#endif
+/* Huaqin modify for HQ-131657 by liunianliang at 2021/06/16 end */
+
 /*******************************************************
 Description:
 	Novatek touchscreen irq enable/disable function.
@@ -774,7 +823,7 @@ void get_tp_info(void)
 {
 	nvt_get_fw_info();
 
-#ifdef CONFIG_TARGET_PRODUCT_MERLIN
+#ifdef CONFIG_TARGET_PRODUCT_MERLINCOMMON
 	sprintf(tp_version_info, "[Vendor]Tianma,[TP-IC]:NT36672A,[FW]0x%x,PID=%04X\n", tp_fw_version, ts->nvt_pid);
 #else
 	if (is_ft_lcm == 0) {
@@ -783,7 +832,7 @@ void get_tp_info(void)
 		sprintf(tp_version_info, "[Vendor]Dijing,[TP-IC]:NT36672,[FW]0x%x,PID=%04X\n", tp_fw_version, ts->nvt_pid);
 	} else if (is_ft_lcm == 3) {
 		sprintf(tp_version_info, "[Vendor]Dijing,[TP-IC]:NT36672D,[FW]0x%x,PID=%04X\n", tp_fw_version, ts->nvt_pid);
-#ifdef CONFIG_TARGET_PRODUCT_SELENE
+#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
 	} else if (is_ft_lcm == 4) {
 		sprintf(tp_version_info, "[Vendor]Tianma,[TP-IC]:NT36672C,[FW]0x%x,PID=%04X\n", tp_fw_version, ts->nvt_pid);
 	} else if (is_ft_lcm == 5) {
@@ -1547,13 +1596,13 @@ static int8_t nvt_ts_check_chip_ver_trim(uint32_t chip_ver_trim_addr)
 
 		nvt_bootloader_reset();
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENE
+#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
 		nvt_set_page(chip_ver_trim_addr);
 #else
 		nvt_set_page(0x1F64E);
 #endif
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENE
+#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
 		buf[0] = chip_ver_trim_addr & 0x7F;
 #else
 		buf[0] = 0x4E;
@@ -1654,7 +1703,7 @@ static ssize_t nvt_irq_show(
 	ssize_t count = 0;
 	struct irq_desc *desc = irq_to_desc(ts->client->irq);
 
-	count = scnprintf(buf, PAGE_SIZE, "irq_depth:%d\n", desc->depth);
+	count = snprintf(buf, sizeof(buf), "irq_depth:%d\n", desc->depth);
 
 	return count;
 }
@@ -1730,7 +1779,7 @@ int tp_compare_ic(void)
 {
 	NVT_LOG("tp_compare_ic in!!");
 	if (is_ft_lcm == 0) {
-#ifndef CONFIG_TARGET_PRODUCT_MERLIN
+#ifndef CONFIG_TARGET_PRODUCT_MERLINCOMMON
 		BOOT_UPDATE_FIRMWARE_NAME = "nvt_tm_fw.bin";
 		MP_UPDATE_FIRMWARE_NAME = "nvt_tm_mp.bin";
 		NVT_LOG("match nt36672A_fhdp_dsi_vdo_tianma_j19_lcm_drv");
@@ -1741,7 +1790,7 @@ int tp_compare_ic(void)
 #endif
 		return 0;
 	} else if (is_ft_lcm == 1) {
-#ifndef CONFIG_TARGET_PRODUCT_MERLIN
+#ifndef CONFIG_TARGET_PRODUCT_MERLINCOMMON
 		BOOT_UPDATE_FIRMWARE_NAME = "nvt_dj_fw.bin";
 		MP_UPDATE_FIRMWARE_NAME = "nvt_dj_mp.bin";
 		NVT_LOG("match nt36672A_fhdp_dsi_vdo_dijing_j19_lcm_drv");
@@ -1752,7 +1801,7 @@ int tp_compare_ic(void)
 #endif
 		return 0;
 	} else if (is_ft_lcm == 3) {
-#ifndef CONFIG_TARGET_PRODUCT_MERLIN
+#ifndef CONFIG_TARGET_PRODUCT_MERLINCOMMON
 		BOOT_UPDATE_FIRMWARE_NAME = "nvt_dj_72d_fw.bin";
 		MP_UPDATE_FIRMWARE_NAME = "nvt_dj_72d_mp.bin";
 		NVT_LOG("match nt36672D_fhdp_dsi_vdo_dijing_j19_lcm_drv");
@@ -1762,7 +1811,7 @@ int tp_compare_ic(void)
 		NVT_LOG("match nt36672D_fhdp_dsi_vdo_tianma_lcm_drv");
 #endif
 		return 0;
-#ifdef CONFIG_TARGET_PRODUCT_SELENE
+#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
 	} else if (is_ft_lcm == 4) {
 		BOOT_UPDATE_FIRMWARE_NAME = "nt36672c_tm_01_ts_fw.bin";
 		MP_UPDATE_FIRMWARE_NAME = "nt36672c_tm_01_ts_mp.bin";
@@ -2030,6 +2079,30 @@ static int32_t nvt_ts_probe(struct spi_device *client)
 			msecs_to_jiffies(NVT_TOUCH_ESD_CHECK_PERIOD));
 #endif /* #if NVT_TOUCH_ESD_PROTECT */
 
+/* Huaqin modify for HQ-131657 by feiwen at 2021/06/03 start */
+#if TP_RESUME_EN
+	INIT_DELAYED_WORK(&nvt_resume_work, nvt_resume_func);
+	nvt_resume_workqueue = create_workqueue("nvt_resume_wq");
+	if (nvt_resume_workqueue == NULL) {
+		NVT_ERR("Failed to create nvt_resume_workqueue!!!");
+		ret = -ENOMEM;
+		goto err_nvt_resume_init_wq_failed;
+	}
+#endif
+/* Huaqin modify for HQ-131657 by feiwen at 2021/06/03 end */
+
+/* Huaqin modify for HQ-131657 by liunianliang at 2021/06/16 start */
+#if TP_SUSPEND_EN
+	INIT_DELAYED_WORK(&nvt_suspend_work, nvt_suspend_func);
+	nvt_suspend_workqueue = create_workqueue("nvt_suspend_wq");
+	if (nvt_suspend_workqueue == NULL) {
+		NVT_ERR("Failed to create nvt_suspend_workqueue!!!");
+		ret = -ENOMEM;
+		goto err_nvt_suspend_init_wq_failed;
+	}
+#endif
+/* Huaqin modify for HQ-131657 by liunianliang at 2021/06/16 end */
+
 	//---set device node---
 #if NVT_TOUCH_PROC
 	ret = nvt_flash_proc_init();
@@ -2149,6 +2222,26 @@ err_lockdown_proc_init_failed:
 nvt_tp_selftest_proc_deinit();
 err_tp_selftest_proc_init_failed:
 #endif
+/* Huaqin modify for HQ-131657 by feiwen at 2021/06/03 start */
+#if TP_RESUME_EN
+if (nvt_resume_workqueue) {
+		cancel_delayed_work_sync(&nvt_resume_work);
+		destroy_workqueue(nvt_resume_workqueue);
+		nvt_resume_workqueue = NULL;
+	}
+err_nvt_resume_init_wq_failed:
+#endif
+/* Huaqin modify for HQ-131657 by feiwen at 2021/06/03 end */
+/* Huaqin modify for HQ-131657 by liunianliang at 2021/06/16 start */
+#if TP_SUSPEND_EN
+	if (nvt_suspend_workqueue) {
+		cancel_delayed_work_sync(&nvt_suspend_work);
+		destroy_workqueue(nvt_suspend_workqueue);
+		nvt_suspend_workqueue = NULL;
+	}
+err_nvt_suspend_init_wq_failed:
+#endif
+/* Huaqin modify for HQ-131657 by liunianliang at 2021/06/16 end */
 /*BSP.Tp - 2020.11.05 -add NVT_LOCKDOWN - end*/
 #if NVT_TOUCH_ESD_PROTECT
 	if (nvt_esd_check_wq) {
@@ -2280,6 +2373,12 @@ static int32_t nvt_ts_remove(struct spi_device *client)
 	}
 
 	spi_set_drvdata(client, NULL);
+	/* Huaqin modify for TP GESTURE by zhangjiangbin at 2021/07/13 start */
+	if (ts->xbuf) {
+		kfree(ts->xbuf);
+		ts->xbuf = NULL;
+	}
+	/* Huaqin modify for TP GESTURE by zhangjiangbin at 2021/07/13 end */
 	if (ts) {
 		kfree(ts);
 		ts = NULL;
@@ -2537,7 +2636,15 @@ static int32_t nvt_ts_resume(struct device *dev)
 	} else {
 		nvt_check_fw_reset_state(RESET_STATE_REK);
 	}
+	/* Huaqin modify for TP GESTURE by zhangjiangbin at 2021/07/13 start */
+#if WAKEUP_GESTURE
+	if (nvt_gesture_flag == false)
+		nvt_irq_enable(true);
+#else
 	nvt_irq_enable(true);
+#endif
+	/* Huaqin modify for TP GESTURE by zhangjiangbin at 2021/07/13 end */
+	
 #if NVT_TOUCH_ESD_PROTECT
 	nvt_esd_check_enable(false);
 	queue_delayed_work(nvt_esd_check_wq, &nvt_esd_check_work,
@@ -2588,7 +2695,14 @@ int32_t nvt_ts_tp_resume(void)
 	} else {
 		nvt_check_fw_reset_state(RESET_STATE_REK);
 	}
+	/* Huaqin modify for TP GESTURE by zhangjiangbin at 2021/07/13 start */
+#if WAKEUP_GESTURE
+	if (nvt_gesture_flag == false)
 		nvt_irq_enable(true);
+#else
+	nvt_irq_enable(true);
+#endif
+	/* Huaqin modify for TP GESTURE by zhangjiangbin at 2021/07/13 end */
 #if NVT_TOUCH_ESD_PROTECT
 	nvt_esd_check_enable(false);
 	queue_delayed_work(nvt_esd_check_wq, &nvt_esd_check_work,
@@ -2655,13 +2769,35 @@ static int nvt_fb_notifier_callback(struct notifier_block *self, unsigned long e
 		blank = evdata->data;
 		if (*blank == FB_BLANK_POWERDOWN) {
 			NVT_LOG("event=%lu, *blank=%d\n", event, *blank);
+/* Huaqin modify for HQ-139605 by feiwen at 2021/06/09 start */
+#if TP_RESUME_EN
+			flush_workqueue(nvt_resume_workqueue);
+#endif
+/* Huaqin modify for HQ-139605 by feiwen at 2021/06/09 end */
+/* Huaqin modify for HQ-131657 by liunianliang at 2021/06/16 start */
+#if TP_SUSPEND_EN
+			nvt_suspend_queue_work();
+#else
 			nvt_ts_suspend(&ts->client->dev);
+#endif
+/* Huaqin modify for HQ-131657 by liunianliang at 2021/06/16 end */
 		}
 	} else if (evdata && evdata->data && event == FB_EVENT_BLANK) {
 		blank = evdata->data;
 		if (*blank == FB_BLANK_UNBLANK) {
 			NVT_LOG("event=%lu, *blank=%d\n", event, *blank);
+/* Huaqin modify for HQ-131657 by liunianliang at 2021/06/16 start */
+#if TP_SUSPEND_EN
+			flush_workqueue(nvt_suspend_workqueue);
+#endif
+/* Huaqin modify for HQ-131657 by liunianliang at 2021/06/16 end */
+/* Huaqin modify for HQ-131657 by feiwen at 2021/06/03 start */
+#if TP_RESUME_EN
+			nvt_resume_queue_work();
+#else
 			nvt_ts_resume(&ts->client->dev);
+#endif
+/* Huaqin modify for HQ-131657 by feiwen at 2021/06/03 end */
 		}
 	}
 
@@ -2701,7 +2837,7 @@ static const struct spi_device_id nvt_ts_id[] = {
 
 #ifdef CONFIG_OF
 static struct of_device_id nvt_match_table[] = {
-#if defined(CONFIG_TARGET_PRODUCT_LANCELOT)
+#if defined(CONFIG_TARGET_PRODUCT_LANCELOTCOMMON) || defined(CONFIG_TARGET_PRODUCT_SHIVACOMMON)
 	{ .compatible = "novatek36672,NVT-ts-spi",},
 #else
 	{ .compatible = "novatek,NVT-ts-spi",},
@@ -2726,35 +2862,35 @@ static struct spi_driver nvt_spi_driver = {
 /* Huaqin modify for HQ-123470 by shujiawang at 2021/03/29 start */
 int __init is_lcm_detect(char *str)
 {
-#ifndef CONFIG_TARGET_PRODUCT_MERLIN
+#ifndef CONFIG_TARGET_PRODUCT_MERLINCOMMON
 	if (!(strcmp(str, "nt36672A_fhdp_dsi_vdo_tianma_j19_lcm_drv"))) {
 #else
 	if (!(strcmp(str, "nt36672A_fhdp_dsi_vdo_tianma_lcm_drv"))) {
 #endif
 		is_ft_lcm = 0;
 		NVT_LOG("Func:%s is_ft 0:%d", __func__, is_ft_lcm);
-#ifndef CONFIG_TARGET_PRODUCT_MERLIN
+#ifndef CONFIG_TARGET_PRODUCT_MERLINCOMMON
 	}else if (!(strcmp(str, "nt36672A_fhdp_dsi_vdo_dijing_j19_lcm_drv"))) {
 #else
 	}else if (!(strcmp(str, "nt36672A_fhdp_dsi_vdo_tianma_lcm_drv_G6"))) {
 #endif
 		is_ft_lcm = 1;
 		NVT_LOG("Func:%s is_ft 1:%d", __func__, is_ft_lcm);
-#ifndef CONFIG_TARGET_PRODUCT_MERLIN
+#ifndef CONFIG_TARGET_PRODUCT_MERLINCOMMON
 	}else if (!(strcmp(str, "ft8719_fhdp_dsi_vdo_huaxing_j19_lcm_drv"))) {
 #else
 	}else if (!(strcmp(str, "ft8719_fhdp_dsi_vdo_xinli_lcm_drv"))) {
 #endif
 		is_ft_lcm = 2;
 		NVT_LOG("Func:%s is_ft 2:%d", __func__, is_ft_lcm);
-#ifndef CONFIG_TARGET_PRODUCT_MERLIN
+#ifndef CONFIG_TARGET_PRODUCT_MERLINCOMMON
 	}else if (!(strcmp(str, "nt36672D_fhdp_dsi_vdo_dijing_j19_lcm_drv"))) {
 #else
 	}else if (!(strcmp(str, "nt36672D_fhdp_dsi_vdo_tianma_lcm_drv"))) {
 #endif
 		is_ft_lcm = 3;
 		NVT_LOG("Func:%s is_ft 3:%d", __func__, is_ft_lcm);
-#ifdef CONFIG_TARGET_PRODUCT_SELENE
+#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
 	}else if (!(strcmp(str, "dsi_panel_k19a_36_02_0a_dsc_vdo_lcm_drv"))) {
 		is_ft_lcm = 4;
 		NVT_LOG("Func:%s is_ft 4:%d", __func__, is_ft_lcm);
@@ -2795,7 +2931,7 @@ static int32_t __init nvt_driver_init(void)
 	int32_t ret = 0;
 
 	NVT_LOG("start\n");
-#ifdef CONFIG_TARGET_PRODUCT_SELENE
+#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
 /*K19A coad for HQ-147450 by feiwen at 2021/7/23 start*/
 	if ((4 != is_ft_lcm) && (5 != is_ft_lcm)){
 /*K19A coad for HQ-147450 by feiwen at 2021/7/23 end*/

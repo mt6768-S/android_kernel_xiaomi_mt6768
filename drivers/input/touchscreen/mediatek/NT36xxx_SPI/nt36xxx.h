@@ -40,6 +40,14 @@
 #include <linux/platform_data/spi-mt65xx.h>
 #endif
 
+/* Huaqin modify for HQ-131657 by feiwen at 2021/06/03 start */
+#define TP_RESUME_EN 0
+/* Huaqin modify for HQ-131657 by feiwen at 2021/06/03 end */
+
+/* Huaqin modify for HQ-131657 by liunianliang at 2021/06/16 start */
+#define TP_SUSPEND_EN 0
+/* Huaqin modify for HQ-131657 by liunianliang at 2021/06/16 end */
+
 #define NVT_DEBUG 0
 #define NVT_NDEBUG 1
 /*BSP.Tp - 2020.11.05 -add NVT_LOCKDOWN - start*/
@@ -82,7 +90,7 @@ void nvt_lockdown_proc_deinit(void);
 #define NVT_IRQ_SWITCH 1
 //---Touch info.---
 #define TOUCH_DEFAULT_MAX_WIDTH 1080
-#ifdef CONFIG_TARGET_PRODUCT_SELENE
+#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
 #define TOUCH_DEFAULT_MAX_HEIGHT 2400
 #else
 #define TOUCH_DEFAULT_MAX_HEIGHT 2340
@@ -99,7 +107,7 @@ extern const uint16_t touch_key_array[TOUCH_KEY_NUM];
 
 /* Enable only when module have tp reset pin and connected to host */
 /* Huaqin modify for TP not need tp reset by zhangjiangbin at 2021/07/13 start */
-#ifdef CONFIG_TARGET_PRODUCT_MERLIN
+#ifdef CONFIG_TARGET_PRODUCT_MERLINCOMMON
 #define NVT_TOUCH_SUPPORT_HW_RST 1
 #else
 #define NVT_TOUCH_SUPPORT_HW_RST 0
@@ -139,7 +147,7 @@ extern char *MP_UPDATE_FIRMWARE_NAME;
 #define NVT_TOUCH_ESD_CHECK_PERIOD 1500	/* ms */
 #define NVT_TOUCH_WDT_RECOVERY 1
 #define NVT_TOUCH_ESD_DISP_RECOVERY 0
-#ifdef CONFIG_TARGET_PRODUCT_SELENE
+#ifdef CONFIG_TARGET_PRODUCT_SELENECOMMON
 #define NVT_TOUCH_VDD_TP_RECOVERY 1
 #else
 #define NVT_TOUCH_VDD_TP_RECOVERY 0

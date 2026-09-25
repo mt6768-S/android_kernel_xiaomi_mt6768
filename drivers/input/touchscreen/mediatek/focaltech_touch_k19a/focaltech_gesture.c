@@ -106,7 +106,6 @@ static struct fts_gesture_st fts_gesture_data;
 /*****************************************************************************
 * Static function prototypes
 *****************************************************************************/
-
 #ifdef CONFIG_TOUCHSCREEN_COMMON
 static ssize_t double_tap_show(struct kobject *kobj,
                                struct kobj_attribute *attr, char *buf)
@@ -509,8 +508,6 @@ int fts_gesture_init(struct fts_ts_data *ts_data)
 	__set_bit(KEY_WAKEUP, input_dev->keybit);
 
 	fts_create_gesture_sysfs(ts_data->dev);
-	input_dev->event = fts_gesture_switch;
-
 #ifdef CONFIG_TOUCHSCREEN_COMMON
 	ret = tp_common_set_double_tap_ops(&double_tap_ops);
 	if (ret < 0) {
@@ -518,6 +515,8 @@ int fts_gesture_init(struct fts_ts_data *ts_data)
 		          __func__, ret);
 	}
 #endif
+
+	input_dev->event = fts_gesture_switch;
 
 	memset(&fts_gesture_data, 0, sizeof(struct fts_gesture_st));
 	ts_data->gesture_mode = DISABLE;
