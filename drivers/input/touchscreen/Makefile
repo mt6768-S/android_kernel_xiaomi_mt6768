@@ -73,6 +73,10 @@ endif
 ifeq ($(CONFIG_TOUCHSCREEN_MTK_GT5688),y)
 obj-$(CONFIG_TOUCHSCREEN_MTK)		+= mediatek/
 endif
+# selene: its NT36xxx_SPI and focaltech k19a drivers live under mediatek/ too
+ifneq ($(filter y,$(CONFIG_TOUCHSCREEN_NT36xxx_SPI) $(CONFIG_TOUCHSCREEN_FTS_XIAOMI)),)
+obj-$(CONFIG_TOUCHSCREEN_MTK)		+= mediatek/
+endif
 obj-$(CONFIG_TOUCHSCREEN_MTK_NT36572_COMMON)   +=  nt36572_common/
 obj-$(CONFIG_TOUCHSCREEN_MIGOR)		+= migor_ts.o
 obj-$(CONFIG_TOUCHSCREEN_MMS114)	+= mms114.o
