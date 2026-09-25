@@ -136,6 +136,8 @@ struct thermal_cooling_device_ops {
 	int (*get_max_state) (struct thermal_cooling_device *, unsigned long *);
 	int (*get_cur_state) (struct thermal_cooling_device *, unsigned long *);
 	int (*set_cur_state) (struct thermal_cooling_device *, unsigned long);
+	int (*get_available)(struct thermal_cooling_device *cdev,
+				char *available);
 	int (*set_min_state)(struct thermal_cooling_device *cdev,
 				unsigned long target);
 	int (*get_min_state)(struct thermal_cooling_device *cdev,

@@ -99,6 +99,8 @@ struct flashlight_dev {
 	/* device status */
 	int enable;
 	int level;
+	int need_cooler;
+	int cooler_level;
 	int low_pt_level;
 	int charger_status;
 	int sw_disable_status;
@@ -148,6 +150,9 @@ int flashlight_pt_is_low(void);
 #ifdef CONFIG_MTK_FLASHLIGHT_DLPT
 void flashlight_kicker_pbm(bool status);
 #endif
+
+int flashlight_get_max_duty(void);
+int flashlight_set_cooler_level(int level);
 
 #endif /* _FLASHLIGHT_CORE_H */
 
