@@ -2827,16 +2827,25 @@ static int msdc_drv_probe(struct platform_device *pdev)
 	 */
 	pdev->name = kstrdup(pdev->name, GFP_KERNEL);
 	/* device rename */
+	/*
+	 * On 4.19 mmc->index is handed out in probe order, not taken from
+	 * the mmc aliases, so a deferred eMMC probe lets the SD slot grab
+	 * index 0 and the "bootdevice" name that fstab and the init scripts
+	 * rely on. Use the host-index from the DT when it is there.
+	 */
+	if (host_index < 0)
+		host_index = mmc->index;
+
 	if (boot_type == BOOTDEV_SDMMC){
-		if ((mmc->index == 0) && !device_rename(mmc->parent, "bootdevice"))
-			dev_info(&pdev->dev, "[msdc%d] rename to bootdevice.\n", mmc->index);
-		else if ((mmc->index == 1) && !device_rename(mmc->parent, "externdevice"))
-			dev_info(&pdev->dev, "[msdc%d] rename to externdevice.\n",mmc->index);
-		else if ((mmc->index == 0) || (mmc->index == 1))
-			dev_info(&pdev->dev, "[msdc%d] error: rename faile.\n", mmc->index);
+		if ((host_index == 0) && !device_rename(mmc->parent, "bootdevice"))
+			dev_info(&pdev->dev, "[msdc%d] rename to bootdevice.\n", host_index);
+		else if ((host_index == 1) && !device_rename(mmc->parent, "externdevice"))
+			dev_info(&pdev->dev, "[msdc%d] rename to externdevice.\n", host_index);
+		else if ((host_index == 0) || (host_index == 1))
+			dev_info(&pdev->dev, "[msdc%d] error: rename faile.\n", host_index);
 	} else if (boot_type == BOOTDEV_UFS){
-		if ((mmc->index == 0) && !device_rename(mmc->parent, "externdevice"))
-			dev_info(&pdev->dev, "[msdc%d] rename to externdevice.\n",mmc->index);
+		if ((host_index == 0) && !device_rename(mmc->parent, "externdevice"))
+			dev_info(&pdev->dev, "[msdc%d] rename to externdevice.\n", host_index);
 		else
 			dev_info(&pdev->dev, "[msdc%d] error: rename faile.\n", mmc->index);
 	}
