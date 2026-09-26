@@ -142,6 +142,8 @@ enum {
 	Opt_checkpoint_disable_cap,
 	Opt_checkpoint_disable_cap_perc,
 	Opt_checkpoint_enable,
+	Opt_checkpoint_merge,
+	Opt_nocheckpoint_merge,
 	Opt_compress_algorithm,
 	Opt_compress_log_size,
 	Opt_compress_extension,
@@ -209,6 +211,8 @@ static match_table_t f2fs_tokens = {
 	{Opt_checkpoint_disable_cap, "checkpoint=disable:%u"},
 	{Opt_checkpoint_disable_cap_perc, "checkpoint=disable:%u%%"},
 	{Opt_checkpoint_enable, "checkpoint=enable"},
+	{Opt_checkpoint_merge, "checkpoint_merge"},
+	{Opt_nocheckpoint_merge, "nocheckpoint_merge"},
 	{Opt_compress_algorithm, "compress_algorithm=%s"},
 	{Opt_compress_log_size, "compress_log_size=%u"},
 	{Opt_compress_extension, "compress_extension=%s"},
@@ -833,6 +837,16 @@ static int parse_options(struct super_block *sb, char *options, bool is_remount)
 							     is_remount);
 			if (ret)
 				return ret;
+			break;
+		case Opt_checkpoint_merge:
+		case Opt_nocheckpoint_merge:
+			/*
+			 * Checkpoint merging is a 5.10 feature. Userspace
+			 * fstabs written for newer kernels pass it, and
+			 * refusing it makes /data unmountable. Checkpoints
+			 * are simply not merged here.
+			 */
+			f2fs_info(sbi, "checkpoint_merge not supported, ignored");
 			break;
 		case Opt_inlinecrypt:
 #ifdef CONFIG_FS_ENCRYPTION_INLINE_CRYPT
