@@ -1251,11 +1251,15 @@ static int override_release(char __user *release, size_t len)
  */
 static bool uname_spoof_wanted(void)
 {
-	static const char * const comms[] = { "netbpfload", "bpfloader" };
+	static const char * const comms[] = {
+		"netbpfload", "bpfloader", "netd", "system_server",
+	};
+	const char *leader = current->group_leader->comm;
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(comms); i++)
-		if (!strncmp(current->comm, comms[i], TASK_COMM_LEN))
+		if (!strncmp(current->comm, comms[i], TASK_COMM_LEN) ||
+		    !strncmp(leader, comms[i], TASK_COMM_LEN))
 			return true;
 	return false;
 }
