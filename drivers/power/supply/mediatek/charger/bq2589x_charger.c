@@ -2163,6 +2163,8 @@ static void bq2589x_charger_shutdown(struct i2c_client *client)
 
 static const struct of_device_id bq2589x_charger_match_table[] = {
 	{.compatible = "ti,bq2589x-1",},
+	/* selene and its variants name the node after the chip */
+	{.compatible = "ti,bq25890",},
 	{},
 };
 
