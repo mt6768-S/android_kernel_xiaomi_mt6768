@@ -106,7 +106,7 @@ enum devkmsg_log_masks {
 /* Keep both the 'on' and 'off' bits clear, i.e. ratelimit by default: */
 #define DEVKMSG_LOG_MASK_DEFAULT	0
 
-static unsigned int __read_mostly devkmsg_log = DEVKMSG_LOG_MASK_DEFAULT;
+static unsigned int __read_mostly devkmsg_log = DEVKMSG_LOG_MASK_ON;
 
 static int __control_devkmsg(char *str)
 {
@@ -154,7 +154,7 @@ static int __init control_devkmsg(char *str)
 }
 __setup("printk.devkmsg=", control_devkmsg);
 
-char devkmsg_log_str[DEVKMSG_STR_MAX_SIZE] = "ratelimit";
+char devkmsg_log_str[DEVKMSG_STR_MAX_SIZE] = "on";
 
 int devkmsg_sysctl_set_loglvl(struct ctl_table *table, int write,
 			      void *buffer, size_t *lenp, loff_t *ppos)
