@@ -782,7 +782,7 @@ static irqreturn_t mtk_spi_interrupt(int irq, void *dev_id)
 static int mtk_spi_probe(struct platform_device *pdev)
 {
 	struct spi_master *master;
-	struct mtk_spi *mdata;
+	struct mtk_spi *mdata = NULL;
 	const struct of_device_id *of_id;
 	struct resource *res;
 	int i, irq, ret, addr_bits, value;
@@ -1012,6 +1012,8 @@ static int mtk_spi_probe(struct platform_device *pdev)
 err_disable_runtime_pm:
 	pm_runtime_disable(&pdev->dev);
 err_put_master:
+	if (mdata && pm_qos_request_active(&mdata->spi_qos_request))
+		pm_qos_remove_request(&mdata->spi_qos_request);
 	spi_master_put(master);
 
 	return ret;
