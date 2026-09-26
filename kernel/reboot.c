@@ -241,6 +241,15 @@ void migrate_to_reboot_cpu(void)
  */
 void kernel_restart(char *cmd)
 {
+#ifdef CONFIG_PANIC_ON_RECOVERY_REBOOT
+	/*
+	 * Bring-up aid: a clean reboot into recovery leaves no trace of
+	 * why userspace gave up, while a panic makes the bootloader save
+	 * the whole kernel log. Panic before anything is shut down.
+	 */
+	if (cmd && !strncmp(cmd, "recovery", 8))
+		panic("reboot to recovery requested: %s", cmd);
+#endif
 	kernel_restart_prepare(cmd);
 	migrate_to_reboot_cpu();
 	syscore_shutdown();
