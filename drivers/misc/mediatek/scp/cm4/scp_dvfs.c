@@ -581,18 +581,20 @@ int scp_request_freq(void)
 	return 0;
 }
 
-void wait_scp_dvfs_init_done(void)
+int wait_scp_dvfs_init_done(void)
 {
 	int count = 0;
 
 	while (g_scp_dvfs_init_flag != 1) {
 		mdelay(1);
-		count++;
-		if (count > 3000) {
+		if (++count > 3000) {
 			pr_err("SCP dvfs driver init fail\n");
 			WARN_ON(1);
+			return -ETIMEDOUT;
 		}
 	}
+
+	return 0;
 }
 
 int scp_pll_ctrl_set(unsigned int pll_ctrl_flag, unsigned int pll_sel)

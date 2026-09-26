@@ -170,7 +170,7 @@ extern unsigned int scp_get_dvfs_opp(void);
 extern uint32_t scp_get_freq(void);
 extern int scp_request_freq(void);
 extern void scp_pll_mux_set(unsigned int pll_ctrl_flag);
-extern void wait_scp_dvfs_init_done(void);
+extern int wait_scp_dvfs_init_done(void);
 extern int __init scp_dvfs_init(void);
 extern void __exit scp_dvfs_exit(void);
 

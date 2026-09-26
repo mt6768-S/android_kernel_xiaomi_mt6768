@@ -1945,7 +1945,15 @@ static int __init scp_init(void)
 
 #if SCP_DVFS_INIT_ENABLE
 	scp_dvfs_init();
-	wait_scp_dvfs_init_done();
+	if (wait_scp_dvfs_init_done()) {
+		/*
+		 * The dvfs driver never probed, usually because the DT has
+		 * no dvfs-opp table. Every later step touches the SCP PLL
+		 * through that driver, so leave the SCP off instead.
+		 */
+		pr_err("[SCP] dvfs not ready, SCP disabled\n");
+		return -ENODEV;
+	}
 
 	/* pll maybe gate, request pll before access any scp reg/sram */
 	scp_pll_ctrl_set(PLL_ENABLE, CLK_26M);
