@@ -125,7 +125,11 @@ obj-$(CONFIG_CHARGER_BQ2415X)	+= bq2415x_charger.o
 obj-$(CONFIG_CHARGER_BQ24190)	+= bq24190_charger.o
 obj-$(CONFIG_CHARGER_BQ24257)	+= bq24257_charger.o
 obj-$(CONFIG_CHARGER_BQ24735)	+= bq24735-charger.o
+# CONFIG_CHARGER_BQ25890 also selects the MediaTek charger class driver
+# in mediatek/charger/, which must own the "ti,bq25890" node.
+ifneq ($(CONFIG_MTK_CHARGER),y)
 obj-$(CONFIG_CHARGER_BQ25890)	+= bq25890_charger.o
+endif
 obj-$(CONFIG_CHARGER_SC8551)	+= sc8551.o
 obj-$(CONFIG_CHARGER_SMB347)	+= smb347-charger.o
 obj-$(CONFIG_CHARGER_TPS65090)	+= tps65090-charger.o
