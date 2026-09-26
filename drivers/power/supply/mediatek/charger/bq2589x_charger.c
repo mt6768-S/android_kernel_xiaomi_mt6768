@@ -2052,6 +2052,7 @@ static int bq2589x_charger_probe(struct i2c_client *client,
 
 	pe.tune_done = true;
 	g_bq = bq;
+	bq2589x_irq = -ENOENT;
 
 	if (client->dev.of_node)
 		bq2589x_parse_dt(&client->dev, bq);
@@ -2072,24 +2073,34 @@ static int bq2589x_charger_probe(struct i2c_client *client,
 		goto err_0;
 	}
 
-	bq2589x_irq = of_get_named_gpio(client->dev.of_node, "bq2589x_irq", 0);
-	if (bq2589x_irq < 0)
-		dev_info(bq->dev, "%s: %d get gpio failed\n", __func__, bq2589x_irq);
-
-	ret = gpio_request(bq2589x_irq, "bq2589x irq pin");
-	if (ret) {
-		dev_info(bq->dev, "%s: %d gpio request failed\n", __func__, bq2589x_irq);
-		goto err_0;
+	/*
+	 * selene's dtbo describes the line with "interrupts" and
+	 * "ti,irq-gpio"; older trees used a "bq2589x_irq" gpio. Charging and
+	 * BC1.2 detection work without the IRQ, which only reports events,
+	 * so a missing line must not fail the probe: the charger device is
+	 * already registered and the USB extcon calls into it.
+	 */
+	bq2589x_irq = -ENOENT;
+	if (client->irq <= 0) {
+		bq2589x_irq = of_get_named_gpio(client->dev.of_node, "ti,irq-gpio", 0);
+		if (bq2589x_irq < 0)
+			bq2589x_irq = of_get_named_gpio(client->dev.of_node, "bq2589x_irq", 0);
+		if (bq2589x_irq >= 0 &&
+		    !gpio_request(bq2589x_irq, "bq2589x irq pin")) {
+			gpio_direction_input(bq2589x_irq);
+			irqn = gpio_to_irq(bq2589x_irq);
+			if (irqn > 0) {
+				client->irq = irqn;
+			} else {
+				gpio_free(bq2589x_irq);
+				bq2589x_irq = -ENOENT;
+			}
+		} else {
+			bq2589x_irq = -ENOENT;
+		}
 	}
-	gpio_direction_input(bq2589x_irq);
-
-	irqn = gpio_to_irq(bq2589x_irq);
-	if (irqn < 0) {
-		dev_info(bq->dev, "%s:%d gpio_to_irq failed\n", __func__, irqn);
-		ret = irqn;
-		goto err_1;
-	}
-	client->irq = irqn;
+	if (client->irq <= 0)
+		dev_info(bq->dev, "%s: no irq, running without charger events\n", __func__);
 
 	ret = bq2589x_psy_register(bq);
 	if (ret)
@@ -2104,13 +2115,15 @@ static int bq2589x_charger_probe(struct i2c_client *client,
 	INIT_DELAYED_WORK(&bq->pe_volt_tune_work, bq2589x_tune_volt_workfunc);
 	INIT_DELAYED_WORK(&bq->check_pe_tuneup_work, bq2589x_check_pe_tuneup_workfunc);
 
-	ret = request_irq(client->irq, bq2589x_charger_interrupt,
-		IRQF_TRIGGER_FALLING | IRQF_ONESHOT, "bq2589x_charger1_irq", bq);
-	if (ret) {
-		dev_info(bq->dev, "%s:Request IRQ %d failed: %d\n", __func__, client->irq, ret);
-		goto err_irq;
-	} else {
-		dev_info(bq->dev, "%s:irq = %d\n", __func__, client->irq);
+	if (client->irq > 0) {
+		ret = request_irq(client->irq, bq2589x_charger_interrupt,
+			IRQF_TRIGGER_FALLING | IRQF_ONESHOT, "bq2589x_charger1_irq", bq);
+		if (ret) {
+			dev_info(bq->dev, "%s:Request IRQ %d failed: %d\n", __func__, client->irq, ret);
+			client->irq = 0;
+		} else {
+			dev_info(bq->dev, "%s:irq = %d\n", __func__, client->irq);
+		}
 	}
 
 	pe.enable = true;
@@ -2118,19 +2131,11 @@ static int bq2589x_charger_probe(struct i2c_client *client,
 	//hardwareinfo_set_prop(HARDWARE_CHARGER_IC_INFO, "BQ2589X");
 	return 0;
 
-err_irq:
-	cancel_work_sync(&bq->irq_work);
-	cancel_work_sync(&bq->adapter_in_work);
-	cancel_work_sync(&bq->adapter_out_work);
-	cancel_delayed_work_sync(&bq->ico_work);
-	cancel_delayed_work_sync(&bq->check_pe_tuneup_work);
-	if (pe.enable) {
-		cancel_delayed_work_sync(&bq->pe_volt_tune_work);
-		cancel_delayed_work_sync(&bq->monitor_work);
-	}
-err_1:
-	gpio_free(bq2589x_irq);
 err_0:
+	if (bq2589x_irq >= 0)
+		gpio_free(bq2589x_irq);
+	bq2589x_irq = -ENOENT;
+	charger_device_unregister(bq->chg_dev);
 	g_bq = NULL;
 
 return ret;
@@ -2156,8 +2161,10 @@ static void bq2589x_charger_shutdown(struct i2c_client *client)
 		cancel_delayed_work_sync(&bq->monitor_work);
 	}
 
-	free_irq(bq->client->irq, NULL);
-	gpio_free(bq2589x_irq);
+	if (bq->client->irq > 0)
+		free_irq(bq->client->irq, bq);
+	if (bq2589x_irq >= 0)
+		gpio_free(bq2589x_irq);
 	g_bq = NULL;
 }
 
