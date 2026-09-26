@@ -827,6 +827,16 @@ config SOFTLOCKUP_DETECTOR
 	  chance to run.  The current stack trace is displayed upon
 	  detection and the system will stay locked up.
 
+config PANIC_ON_RECOVERY_REBOOT
+	bool "Panic instead of rebooting into recovery"
+	depends on DEBUG_KERNEL
+	help
+	  Turn a "reboot recovery" request into a kernel panic, so that
+	  bootloaders that save the kernel log on a panic keep the log of
+	  the boot that gave up. Only for bringing up a new userspace.
+
+	  If unsure, say N.
+
 config BOOTPARAM_SOFTLOCKUP_PANIC
 	bool "Panic (Reboot) On Soft Lockups"
 	depends on SOFTLOCKUP_DETECTOR
