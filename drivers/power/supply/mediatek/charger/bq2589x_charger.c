@@ -1773,7 +1773,9 @@ static int bq2589x_charger_probe(struct i2c_client *client,
 		return -EINVAL;
 	}
 
-	bq->platform_data = bq2589x_parse_dt(node, bq);
+	pe.tune_done = true;
+	g_bq = bq;
+	bq2589x_irq = -ENOENT;
 
 	if (!bq->platform_data) {
 		pr_info("No platform data provided.\n");
@@ -1802,21 +1804,61 @@ static int bq2589x_charger_probe(struct i2c_client *client,
 		return ret;
 	}
 
-	ret = sysfs_create_group(&bq->dev->kobj, &bq2589x_attr_group);
+	/*
+	 * selene's dtbo describes the line with "interrupts" and
+	 * "ti,irq-gpio"; older trees used a "bq2589x_irq" gpio. Charging and
+	 * BC1.2 detection work without the IRQ, which only reports events,
+	 * so a missing line must not fail the probe: the charger device is
+	 * already registered and the USB extcon calls into it.
+	 */
+	bq2589x_irq = -ENOENT;
+	if (client->irq <= 0) {
+		bq2589x_irq = of_get_named_gpio(client->dev.of_node, "ti,irq-gpio", 0);
+		if (bq2589x_irq < 0)
+			bq2589x_irq = of_get_named_gpio(client->dev.of_node, "bq2589x_irq", 0);
+		if (bq2589x_irq >= 0 &&
+		    !gpio_request(bq2589x_irq, "bq2589x irq pin")) {
+			gpio_direction_input(bq2589x_irq);
+			irqn = gpio_to_irq(bq2589x_irq);
+			if (irqn > 0) {
+				client->irq = irqn;
+			} else {
+				gpio_free(bq2589x_irq);
+				bq2589x_irq = -ENOENT;
+			}
+		} else {
+			bq2589x_irq = -ENOENT;
+		}
+	}
+	if (client->irq <= 0)
+		dev_info(bq->dev, "%s: no irq, running without charger events\n", __func__);
+
+	ret = bq2589x_psy_register(bq);
 	if (ret)
 		dev_err(bq->dev, "failed to register sysfs. err: %d\n", ret);
 
 	determine_initial_status(bq);
 
-	pr_info("bq2589x probe successfully, Part Num:%d, Revision:%d\n!",
-	       bq->part_no, bq->revision);
+	if (client->irq > 0) {
+		ret = request_irq(client->irq, bq2589x_charger_interrupt,
+			IRQF_TRIGGER_FALLING | IRQF_ONESHOT, "bq2589x_charger1_irq", bq);
+		if (ret) {
+			dev_info(bq->dev, "%s:Request IRQ %d failed: %d\n", __func__, client->irq, ret);
+			client->irq = 0;
+		} else {
+			dev_info(bq->dev, "%s:irq = %d\n", __func__, client->irq);
+		}
+	}
 
 	return 0;
 }
 
-static int bq2589x_charger_remove(struct i2c_client *client)
-{
-	struct bq2589x *bq = i2c_get_clientdata(client);
+err_0:
+	if (bq2589x_irq >= 0)
+		gpio_free(bq2589x_irq);
+	bq2589x_irq = -ENOENT;
+	charger_device_unregister(bq->chg_dev);
+	g_bq = NULL;
 
 	mutex_destroy(&bq->i2c_rw_lock);
 
@@ -1845,11 +1887,12 @@ static void bq2589x_charger_shutdown(struct i2c_client *client)
 			bq2589x_set_chargecurrent(bq, 128);
 		}
 	}
-	/*HQ-138863 charge by zhixueyin at 2021/7/13 end*/
-	/*K19A HQ-138863 K19A  cdp by zhixueyin at 2021/7/10 start*/
-	bq2589x_disable_maxcen(bq);
-	pr_debug("bq2589x_disable_maxcen for shutdown\n");
-	/*K19A HQ-138863 K19A  cdp by zhixueyin at 2021/7/10 start*/
+
+	if (bq->client->irq > 0)
+		free_irq(bq->client->irq, bq);
+	if (bq2589x_irq >= 0)
+		gpio_free(bq2589x_irq);
+	g_bq = NULL;
 }
 
 static struct i2c_driver bq2589x_charger_driver = {
