@@ -39,6 +39,7 @@
 #include "queue.h"
 #include "mmc_ops.h"
 #include "core.h"
+#include "host.h"
 #include "card.h"
 
 #if defined(CONFIG_MMC_MTK_PRO)
@@ -333,6 +334,7 @@ int emmc_rpmb_switch(struct mmc_card *card, struct emmc_rpmb_blk_data *md)
 				return ret;
 			}
 		}
+		mmc_retune_pause(card->host);
 	}
 #endif
 
@@ -364,6 +366,7 @@ int emmc_rpmb_switch(struct mmc_card *card, struct emmc_rpmb_blk_data *md)
 	}
 #elif defined(CONFIG_MMC_MTK)
 	if (main_md->part_curr == EXT_CSD_PART_CONFIG_ACC_RPMB) {
+		mmc_retune_unpause(card->host);
 		if (card->reenable_cmdq && !card->ext_csd.cmdq_en) {
 			ret = mmc_cmdq_enable(card);
 			if (ret)
@@ -378,6 +381,32 @@ int emmc_rpmb_switch(struct mmc_card *card, struct emmc_rpmb_blk_data *md)
 #endif
 	main_md->part_curr = md->part_type;
 	return 0;
+}
+
+/*
+ * Like card_busy_detect() in block.c: after an RPMB write the card stays in
+ * the programming state for a while and must not get another command.
+ */
+static int emmc_rpmb_wait_ready(struct mmc_card *card)
+{
+	unsigned long timeout = jiffies + msecs_to_jiffies(10 * 1000);
+	u32 status;
+	int err;
+
+	for (;;) {
+		err = __mmc_send_status(card, &status, 5);
+		if (err)
+			return err;
+		if ((status & R1_READY_FOR_DATA) &&
+		    R1_CURRENT_STATE(status) != R1_STATE_PRG)
+			return 0;
+		if (time_after(jiffies, timeout)) {
+			MSG(ERR, "%s: card stuck in programming, status 0x%x\n",
+			    __func__, status);
+			return -ETIMEDOUT;
+		}
+		usleep_range(500, 1000);
+	}
 }
 
 static int emmc_rpmb_send_command(
@@ -451,6 +480,9 @@ static int emmc_rpmb_send_command(
 		return cmd.error;
 	if (data.error)
 		return data.error;
+
+	if (req_type == RPMB_REQ)
+		return emmc_rpmb_wait_ready(card);
 
 	return 0;
 }
