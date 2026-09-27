@@ -2735,7 +2735,8 @@ static void msdc_of_property_parse(struct platform_device *pdev,
 		host->hs400_cmd_resp_sel_rising = false;
 
 	if (of_property_read_bool(pdev->dev.of_node,
-				  "mediatek,cqhci"))
+				  "mediatek,cqhci") &&
+	    !IS_ENABLED(CONFIG_MMC_MTK_DISABLE_CQHCI))
 		host->cqhci = true;
 	else
 		host->cqhci = false;
