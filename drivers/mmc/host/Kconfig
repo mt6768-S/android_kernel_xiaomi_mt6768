@@ -965,6 +965,15 @@ config MMC_MTK
 	  This is needed if support for any SD/SDIO/MMC devices is required.
 	  If unsure, say N.
 
+config MMC_MTK_DISABLE_CQHCI
+	bool "Ignore mediatek,cqhci and run without command queue engine"
+	depends on MMC_MTK
+	help
+	  The MediaTek RPMB driver issues legacy commands on behalf of the
+	  TEE. With the CQHCI engine enabled this can leave the host command
+	  line busy, and the resulting host reset fails /data I/O. Say Y to
+	  keep the eMMC in legacy mode even if the device tree asks for CQHCI.
+
 config MMC_SDHCI_MICROCHIP_PIC32
         tristate "Microchip PIC32MZDA SDHCI support"
         depends on MMC_SDHCI && PIC32MZDA && MMC_SDHCI_PLTFM
