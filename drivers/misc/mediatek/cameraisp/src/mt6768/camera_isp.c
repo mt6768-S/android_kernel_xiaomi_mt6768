@@ -643,6 +643,11 @@ struct S_START_T {
  */
 static unsigned int g_regScen = 0xa5a5a5a5; /* remove later */
 
+static unsigned int g_virtual_cq_cnt[2] = {0,0};
+static unsigned int g_virtual_cq_cnt_a;
+static unsigned int g_virtual_cq_cnt_b;
+static  spinlock_t  virtual_cqcnt_lock;
+
 static /*volatile*/ wait_queue_head_t P2WaitQueueHead_WaitDeque;
 static /*volatile*/ wait_queue_head_t P2WaitQueueHead_WaitFrame;
 static /*volatile*/ wait_queue_head_t P2WaitQueueHead_WaitFrameEQDforDQ;
@@ -4122,6 +4127,7 @@ EXPORT_SYMBOL(ISP_Halt_Mask);
  *****************************************************************************/
 static void ISP_EnableClock(bool En)
 {
+	unsigned int module = 0;
 #if defined(EP_NO_CLKMGR)
 	unsigned int setReg;
 #endif
@@ -4169,6 +4175,18 @@ static void ISP_EnableClock(bool En)
 		G_u4EnableClockCount++;
 		spin_unlock(&(IspInfo.SpinLockClock));
 		Prepare_Enable_ccf_clock(); /* can't be used in spinlock! */
+		spin_lock(&(IspInfo.SpinLockClock));
+		if (G_u4EnableClockCount == 1) {
+			spin_unlock(&(IspInfo.SpinLockClock));
+			for (module = ISP_CAM_A_IDX; module < ISP_CAMSV4_IDX; module++) {
+				enable_irq(isp_devs[module].irq);
+				LOG_INF(
+					"enable_irq cam %d, irq=%d\n",
+					module, isp_devs[module].irq);
+			}
+		} else {
+			spin_unlock(&(IspInfo.SpinLockClock));
+		}
 #endif
 	/* Disable CAMSYS_HALT1_EN: LSCI&BPCI, To avoid ISP halt keep arise */
 		#if 0/* TBD */
@@ -4225,7 +4243,17 @@ static void ISP_EnableClock(bool En)
 
 			ISP_WR32(CLOCK_CELL_BASE, _reg&(~(1<<6)));
 		}
-		spin_unlock(&(IspInfo.SpinLockClock));
+		if (G_u4EnableClockCount == 0) {
+			spin_unlock(&(IspInfo.SpinLockClock));
+			for (module = ISP_CAM_A_IDX; module < ISP_CAMSV4_IDX; module++) {
+				disable_irq(isp_devs[module].irq);
+				LOG_INF(
+					"disable_irq cam %d, irq=%d\n",
+					module, isp_devs[module].irq);
+			}
+		} else {
+			spin_unlock(&(IspInfo.SpinLockClock));
+		}
 		Disable_Unprepare_ccf_clock(); /* can't be used in spinlock! */
 #endif
 	}
@@ -8994,6 +9022,26 @@ static long ISP_ioctl(struct file *pFile, unsigned int Cmd, unsigned long Param)
 		}
 		LOG_NOTICE("ISP_SET_SEC_ENABLE sec_on = %d\n", sec_on);
 		break;
+	case ISP_SET_VIR_CQCNT:
+		spin_lock((spinlock_t *)(&virtual_cqcnt_lock));
+		if (copy_from_user(&g_virtual_cq_cnt, (void *)Param,
+			sizeof(unsigned int)*2) == 0) {
+			LOG_NOTICE("From hw_module:%d Virtual CQ count from user land : %d\n",
+				g_virtual_cq_cnt[0], g_virtual_cq_cnt[1]);
+		} else {
+			LOG_NOTICE(
+				"Virtual CQ count copy_from_user failed\n");
+			Ret = -EFAULT;
+		}
+		if(g_virtual_cq_cnt[0] == 0){
+			g_virtual_cq_cnt_a = g_virtual_cq_cnt[1];
+			LOG_NOTICE("Update Virtual CQ cnt for hw_module:0\n");
+		}else if(g_virtual_cq_cnt[0] == 1){
+			g_virtual_cq_cnt_b = g_virtual_cq_cnt[1];
+			LOG_NOTICE("Update Virtual CQ cnt for hw_module:1\n");
+		}
+		spin_unlock((spinlock_t *)(&virtual_cqcnt_lock));
+		break;
 	default:
 	{
 		LOG_NOTICE("Unknown Cmd(%d)\n", Cmd);
@@ -9474,6 +9522,7 @@ static long ISP_ioctl_compat(struct file *filp, unsigned int cmd,
 	case ISP_SET_PM_QOS_INFO:
 	case ISP_SET_PM_QOS:
 	case ISP_SET_SEC_DAPC_REG:
+	case ISP_SET_VIR_CQCNT:
 		return filp->f_op->unlocked_ioctl(filp, cmd, arg);
 	default:
 		return -ENOIOCTLCMD;
@@ -10310,6 +10359,9 @@ static signed int ISP_probe(struct platform_device *pDev)
 					return Ret;
 				}
 
+				/* Reset irq ref cnt after request_irq by disable_irq. */
+				disable_irq(isp_dev->irq);
+
 				pr_info(
 					"nr_isp_devs=%d, devnode(%s), irq=%d, ISR: %s\n",
 					nr_isp_devs, pDev->dev.of_node->name,
@@ -10377,6 +10429,7 @@ static signed int ISP_probe(struct platform_device *pDev)
 		spin_lock_init(&(SpinLock_P2FrameList));
 		spin_lock_init(&(SpinLockRegScen));
 		spin_lock_init(&(SpinLock_UserKey));
+		spin_lock_init(&(virtual_cqcnt_lock));
 		#ifdef ENABLE_KEEP_ION_HANDLE
 		for (i = 0; i < ISP_DEV_NODE_NUM; i++) {
 			if (gION_TBL[i].node != ISP_DEV_NODE_NUM) {
@@ -14863,9 +14916,20 @@ LB_CAMA_SOF_IGNORE:
 	spin_unlock(&(IspInfo.SpinLockIrq[module]));
 	/*  */
 	if (IrqStatus & SOF_INT_ST) {
+		if( (ISP_RD32(CAM_REG_CTL_SPARE2(reg_module))%0x100) != g_virtual_cq_cnt_a){
+			IRQ_LOG_KEEPER(module, m_CurrentPPB, _LOG_INF,
+				"CAMA PHY cqcnt:%d != VIR cqcnt:%d\n",
+				(ISP_RD32(CAM_REG_CTL_SPARE2(reg_module))%0x100),
+				g_virtual_cq_cnt_a);
+		}else {
+			IRQ_LOG_KEEPER(module, m_CurrentPPB, _LOG_DBG,
+				"CAMA PHY cqcnt:%d VIR cqcnt:%d\n",
+				(ISP_RD32(CAM_REG_CTL_SPARE2(reg_module))%0x100),
+				g_virtual_cq_cnt_a);
 			wake_up_interruptible(&IspInfo.WaitQHeadCam
 			[ISP_GetWaitQCamIndex(module)]
 			[ISP_WAITQ_HEAD_IRQ_SOF]);
+		}
 	}
 	if (IrqStatus & SW_PASS1_DON_ST) {
 		wake_up_interruptible(&IspInfo.WaitQHeadCam
@@ -15472,9 +15536,21 @@ LB_CAMB_SOF_IGNORE:
 	spin_unlock(&(IspInfo.SpinLockIrq[module]));
 	/*  */
 	if (IrqStatus & SOF_INT_ST) {
+        if ((ISP_RD32(CAM_REG_CTL_SPARE2(reg_module)) % 0x100) !=
+            g_virtual_cq_cnt_b) {
+            IRQ_LOG_KEEPER(module, m_CurrentPPB, _LOG_INF,
+                "CAMB PHY cqcnt:%d != VIR cqcnt:%d\n",
+                (ISP_RD32(CAM_REG_CTL_SPARE2(reg_module)) % 0x100),
+                g_virtual_cq_cnt_b);
+        } else {
+            IRQ_LOG_KEEPER(module, m_CurrentPPB, _LOG_DBG,
+                "CAMB PHY cqcnt:%d VIR cqcnt:%d\n",
+                (ISP_RD32(CAM_REG_CTL_SPARE2(reg_module)) % 0x100),
+                g_virtual_cq_cnt_b);
 		wake_up_interruptible(&IspInfo.WaitQHeadCam
 			[ISP_GetWaitQCamIndex(module)]
 			[ISP_WAITQ_HEAD_IRQ_SOF]);
+        }
 	}
 	if (IrqStatus & SW_PASS1_DON_ST) {
 		wake_up_interruptible(&IspInfo.WaitQHeadCam
