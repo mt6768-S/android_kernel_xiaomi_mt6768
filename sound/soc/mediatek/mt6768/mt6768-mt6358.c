@@ -32,6 +32,9 @@
 #define EXT_RCV_AMP_W_NAME "Ext_Reciver_Amp"    // ALPS05007528
 #endif
 
+static const char *awinic = "awinic";
+static const char *foursemi = "foursemi";
+extern char *get_audio_pa_vendor(void);
 
 static const char *const mt6768_spk_type_str[] = {MTK_SPK_NOT_SMARTPA_STR,
 						  MTK_SPK_RICHTEK_RT5509_STR,
@@ -211,6 +214,7 @@ static int mt6768_mt6358_spk_amp_event(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
+		if (strcmp((const char *)get_audio_pa_vendor(), awinic) == 0) {
 		#if defined(CONFIG_SND_SOC_AW87XXX)
 		aw87xxx_set_profile(AW87XXX_LEFT_CHANNEL,
 				    (char *)aw87xxx_mode_function[AW87XXX_MUSIC_MODE]);
@@ -219,11 +223,16 @@ static int mt6768_mt6358_spk_amp_event(struct snd_soc_dapm_widget *w,
 				    (char *)aw87xxx_mode_function[AW87XXX_MUSIC_MODE]);
 		#endif
 		#endif
+		} else if (strcmp((const char *)get_audio_pa_vendor(), foursemi) == 0) {
 		#if defined(CONFIG_SND_SOC_FS16XX)
 		fsm_speaker_onn(FSM_SCENE_MUSIC);
 		#endif
+		} else {
+			pr_err("Please check out start PA");
+		}
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
+		if (strcmp((const char *)get_audio_pa_vendor(), awinic) == 0) {
 		#if defined(CONFIG_SND_SOC_AW87XXX)
 		aw87xxx_set_profile(AW87XXX_LEFT_CHANNEL,
 				    (char *)aw87xxx_mode_function[AW87XXX_OFF_MODE]);
@@ -232,9 +241,13 @@ static int mt6768_mt6358_spk_amp_event(struct snd_soc_dapm_widget *w,
 				    (char *)aw87xxx_mode_function[AW87XXX_OFF_MODE]);
 		#endif
 		#endif
+		} else if (strcmp((const char *)get_audio_pa_vendor(), foursemi) == 0) {
 		#if defined(CONFIG_SND_SOC_FS16XX)
 		fsm_speaker_off();
 		#endif
+		} else {
+			pr_err("Please check out off PA");
+		}
 		break;
 	default:
 		break;
@@ -256,32 +269,45 @@ static int mt6768_mt6358_rcv_amp_event(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_POST_PMU:
+	if (strcmp((const char *)get_audio_pa_vendor(), awinic) == 0) {
 		if (rcv_amp_mode) {
-			#if defined(CONFIG_SND_SOC_FS16XX)
-			fsm_speaker_onn(FSM_SCENE_RCV);
-			#endif
 			#if defined(CONFIG_SND_SOC_AW87XXX)
 			aw87xxx_set_profile(AW87XXX_RIGHT_CHANNEL,
 					    (char *)aw87xxx_mode_function[AW87XXX_RCV_MODE]);
 			#endif
 		} else {
-			#if defined(CONFIG_SND_SOC_FS16XX)
-			fsm_speaker_onn(FSM_SCENE_MUSIC);
-			#endif
 			#if defined(CONFIG_SND_SOC_AW87XXX)
 			aw87xxx_set_profile(AW87XXX_RIGHT_CHANNEL,
 					    (char *)aw87xxx_mode_function[AW87XXX_MUSIC_MODE]);
 			#endif
 		}
+	} else if (strcmp((const char *)get_audio_pa_vendor(), foursemi) == 0) {
+		if (rcv_amp_mode) {
+			#if defined(CONFIG_SND_SOC_FS16XX)
+			fsm_speaker_onn(FSM_SCENE_RCV);
+			#endif
+		} else {
+			#if defined(CONFIG_SND_SOC_FS16XX)
+			fsm_speaker_onn(FSM_SCENE_MUSIC);
+			#endif
+		}
+	} else {
+			pr_err("Please check out rcv PA");
+	}
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
-	#if defined(CONFIG_SND_SOC_FS16XX)
-		fsm_speaker_off();
-	#endif
+	if (strcmp((const char *)get_audio_pa_vendor(), awinic) == 0) {
 	#if defined(CONFIG_SND_SOC_AW87XXX)
 		aw87xxx_set_profile(AW87XXX_RIGHT_CHANNEL,
 				    (char *)aw87xxx_mode_function[AW87XXX_OFF_MODE]);
 	#endif
+	} else if (strcmp((const char *)get_audio_pa_vendor(), foursemi) == 0) {
+	#if defined(CONFIG_SND_SOC_FS16XX)
+		fsm_speaker_off();
+	#endif
+	} else {
+			pr_err("Please check out off PA");
+	}
 		break;
 	default:
 		break;
