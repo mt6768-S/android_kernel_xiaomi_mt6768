@@ -244,7 +244,6 @@ INT32 wmt_ctrl_rx(P_WMT_CTRL_DATA pWmtCtrlData /*UINT8 *pBuff, UINT32 buffLen, U
 	INT32 extended = 0;
 	P_OSAL_THREAD p_rx_thread = NULL;
 	OSAL_THREAD_SCHEDSTATS schedstats;
-	u64 start_time;
 
 	if (readSize)
 		*readSize = 0;
@@ -270,7 +269,6 @@ INT32 wmt_ctrl_rx(P_WMT_CTRL_DATA pWmtCtrlData /*UINT8 *pBuff, UINT32 buffLen, U
 	p_rx_thread = mtk_stp_rx_thread_get();
 	osal_thread_sched_mark(p_rx_thread, &schedstats);
 
-	start_time = jiffies;
 
 	while (readLen == 0 && leftCnt > 0) {	/* got nothing, wait for STP's signal */
 		/* if assert happen, do not wait for any signal again */
@@ -282,18 +280,10 @@ INT32 wmt_ctrl_rx(P_WMT_CTRL_DATA pWmtCtrlData /*UINT8 *pBuff, UINT32 buffLen, U
 		if (waitRet == 0) {
 			leftCnt--;
 
-			WMT_INFO_FUNC("RX waiting [%u] ms ===========", jiffies_to_msecs(jiffies - start_time));
 			/* dump btif_rxd's backtrace to check whether it is blocked or not */
 			osal_dump_thread_state("btif_rxd");
-			if (!mtk_wcn_stp_is_sdio_mode())
-				mtk_wcn_consys_poll_cpucpr_dump(5, 1);
-			else
-				stp_dbg_poll_cpupcr(5, 1, 1);
-			if ((leftCnt == loopCnt - 1) && !mtk_wcn_stp_is_sdio_mode())
-				mtk_wcn_consys_pc_log_dump();
 
-			if (!mtk_wcn_stp_is_sdio_mode())
-				mtk_wcn_consys_stp_btif_logger_ctrl(BTIF_DUMP_BTIF_IRQ);
+			stp_dbg_poll_cpupcr(5, 1, 1);
 
 			if (leftCnt <= 0) {
 				if (extended == 0) {
@@ -322,13 +312,11 @@ INT32 wmt_ctrl_rx(P_WMT_CTRL_DATA pWmtCtrlData /*UINT8 *pBuff, UINT32 buffLen, U
 				osal_thread_sched_unmark(p_rx_thread, &schedstats);
 				wmt_ctrl_show_sched_stats_log(p_rx_thread, &schedstats);
 
-				if (!mtk_wcn_stp_is_sdio_mode())
-					mtk_wcn_consys_poll_cpucpr_dump(5, 1);
-				else
-					stp_dbg_poll_cpupcr(5, 1, 1);
+				stp_dbg_poll_cpupcr(5, 1, 1);
+
 				WMT_ERR_FUNC("wmt_dev_rx_timeout: timeout,jiffies(%lu),timeoutvalue(%d)\n",
 					     jiffies, pDev->rWmtRxWq.timeoutValue);
-				wmt_lib_cmd_rx_timeout_dump();
+				//wmt_lib_cmd_rx_timeout_dump();
 
 				/* Reason number 44 means that stp data path still has data,
 				 * possibly a driver problem
@@ -340,7 +328,7 @@ INT32 wmt_ctrl_rx(P_WMT_CTRL_DATA pWmtCtrlData /*UINT8 *pBuff, UINT32 buffLen, U
 			}
 		} else if (waitRet < 0) {
 			WMT_WARN_FUNC("wmt_dev_rx_timeout: interrupted by signal (%d)\n", waitRet);
-			wmt_lib_cmd_rx_timeout_dump();
+			//wmt_lib_cmd_rx_timeout_dump();
 			return waitRet;
 		}
 		readLen = mtk_wcn_stp_receive_data(pBuff, buffLen, WMT_TASK_INDX);
