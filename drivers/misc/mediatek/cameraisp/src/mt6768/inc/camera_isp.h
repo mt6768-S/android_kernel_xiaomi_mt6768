@@ -583,17 +583,10 @@ struct ISP_PM_QOS_STRUCT {
 	unsigned int       bw_sum;
 };
 
-/* For k510 compatible */
-struct ISP_BW {
-	unsigned int peak;
-	unsigned int avg;
-};
-
 struct ISP_PM_QOS_INFO_STRUCT {
 	unsigned int       bw_value;
 	unsigned int       module;
 	unsigned int       fps;
-	struct ISP_BW      port_bw[_cam_max_]; /* For k510 compatible */
 };
 
 /*******************************************************************************
@@ -686,8 +679,9 @@ enum ISP_CMD_ENUM {
 	ISP_CMD_SET_PM_QOS,
 	ISP_CMD_SET_PM_QOS_INFO,
 	ISP_CMD_TRANSFOR_CCU_REG,
-	ISP_CMD_SET_SEC_DAPC_REG,
-	ISP_CMD_SET_SEC_ENABLE
+	ISP_CMD_SET_SEC_ENABLE,
+	ISP_CMD_SET_VIR_CQCNT,
+	ISP_CMD_SET_SEC_DAPC_REG
 };
 
 enum ISP_HALT_DMA_ENUM {
@@ -806,6 +800,8 @@ enum ISP_HALT_DMA_ENUM {
 	_IOWR(ISP_MAGIC, ISP_CMD_TRANSFOR_CCU_REG,  unsigned char*)
 #define ISP_SET_SEC_ENABLE \
 	_IOW(ISP_MAGIC, ISP_CMD_SET_SEC_ENABLE, unsigned int)
+#define ISP_SET_VIR_CQCNT \
+	_IOWR(ISP_MAGIC, ISP_CMD_SET_VIR_CQCNT, unsigned int)
 
 #ifdef CONFIG_COMPAT
 #define COMPAT_ISP_READ_REGISTER      \
@@ -848,6 +844,8 @@ enum ISP_HALT_DMA_ENUM {
 #define COMPAT_ISP_SET_MEM_INFO       \
 	_IOWR(ISP_MAGIC, ISP_CMD_SET_MEM_INFO, \
 					struct compat_ISP_MEM_INFO_STRUCT)
+#define COMPAT_ISP_SET_VIR_CQCNT      \
+	_IOWR(ISP_MAGIC, ISP_CMD_SET_VIR_CQCNT, unsigned int)
 #endif
 
 int32_t ISP_MDPClockOnCallback(uint64_t engineFlag);
