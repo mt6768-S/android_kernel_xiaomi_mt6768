@@ -215,12 +215,6 @@ static DEVICE_ATTR_RO(dummy_job_wa_info);
 
 static bool wa_blob_load_needed(struct kbase_device *kbdev)
 {
-	if (of_machine_is_compatible("arm,juno"))
-		return false;
-
-	if (kbase_hw_has_issue(kbdev, BASE_HW_ISSUE_TTRX_3485))
-		return true;
-
 	return false;
 }
 

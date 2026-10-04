@@ -19,5 +19,5 @@
 #
 
 menu "ARM GPU Configuration"
-source "$(MALI_KCONFIG_EXT_PREFIX)drivers/gpu/arm/midgard/Kconfig"
+source "drivers/gpu/mediatek/gpu_mali/mali_valhall/mali-r56p0/drivers/gpu/arm/midgard/Kconfig"
 endmenu
