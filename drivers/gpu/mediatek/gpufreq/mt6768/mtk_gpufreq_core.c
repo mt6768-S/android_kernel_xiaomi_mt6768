@@ -1801,21 +1801,18 @@ static void __mt_gpufreq_set(unsigned int idx_old, unsigned int idx_new,
 	g_cur_opp_volt = volt_new;
 	g_cur_opp_vsram_volt = vsram_volt_new;
 
-	gpufreq_pr_debug("@%s: done idx: %d ---> %d, freq: %d ---> %d(%d), volt: %d ---> %d(%d), vsram_volt: %d ---> %d(%d)\n",
+	gpufreq_pr_debug("@%s: done idx: %d ---> %d, freq: %d ---> %d, volt: %d ---> %d, vsram_volt: %d ---> %d\n",
 		__func__, idx_old, idx_new,
-			freq_old, freq_new, mt_get_ckgen_freq(5),
-			volt_old, volt_new, __mt_gpufreq_get_cur_volt(),
-			vsram_volt_old, vsram_volt_new,
-			__mt_gpufreq_get_cur_vsram_volt());
+			freq_old, freq_new,
+			volt_old, volt_new,
+			vsram_volt_old, vsram_volt_new);
 
 	ged_log_buf_print2(gpufreq_ged_log, GED_LOG_ATTR_TIME,
-	"done idx: %d ---> %d, freq: %d ---> %d(%d) (GPUPLL_CON1 = 0x%x), volt: %d ---> %d(%d), vsram_volt: %d ---> %d(%d)\n\n",
+	"done idx: %d ---> %d, freq: %d ---> %d, volt: %d ---> %d, vsram_volt: %d ---> %d\n\n",
 		idx_old, idx_new,
 		freq_old, freq_new,
-		mt_get_ckgen_freq(5), DRV_Reg32(GPUPLL_CON1),
-		volt_old, volt_new, __mt_gpufreq_get_cur_volt(),
-		vsram_volt_old, vsram_volt_new,
-		__mt_gpufreq_get_cur_vsram_volt());
+		volt_old, volt_new,
+		vsram_volt_old, vsram_volt_new);
 
 	__mt_gpufreq_kick_pbm(1);
 }
@@ -1826,27 +1823,13 @@ static void __mt_gpufreq_set(unsigned int idx_old, unsigned int idx_new,
 static void __mt_gpufreq_clock_switch(unsigned int freq_new)
 {
 	enum g_post_divider_power_enum post_divider_power;
-	unsigned int cur_volt;
-	unsigned int cur_freq;
 	unsigned int dds;
 
-	cur_volt = __mt_gpufreq_get_cur_volt();
-	cur_freq = __mt_gpufreq_get_cur_freq();
-
-	/* [MT6768] GPUPLL_CON1[24:26] is POST_DIVIDER
-	 *    000 : /1
-	 *    001 : /2
-	 *    010 : /4
-	 *    011 : /8
-	 *    100 : /16
-	 */
 	post_divider_power = __mt_gpufreq_get_post_divider_power(freq_new, 0);
 	dds = __mt_gpufreq_calculate_dds(freq_new, post_divider_power);
 
-	gpufreq_pr_debug("@%s: request GPU dds = 0x%x, cur_volt = %d, cur_freq = %d\n",
-			__func__, dds, cur_volt, cur_freq);
-
-	gpufreq_pr_debug("@%s: begin, freq = %d, GPUPLL_CON1 = 0x%x\n", __func__, freq_new, DRV_Reg32(GPUPLL_CON1));
+	gpufreq_pr_debug("@%s: request GPU dds = 0x%x, freq_new = %d\n",
+			__func__, dds, freq_new);
 
 #ifndef FHCTL_READY
 	/* Force parking if FHCTL not ready */
@@ -1868,7 +1851,6 @@ static void __mt_gpufreq_clock_switch(unsigned int freq_new)
 		gpufreq_pr_debug("@%s: mt_dfs_general_pll not ready\n", __func__);
 #endif
 	}
-	gpufreq_pr_debug("@%s: end, freq = %d, GPUPLL_CON1 = 0x%x\n", __func__, freq_new, DRV_Reg32(GPUPLL_CON1));
 }
 
 /*
@@ -1943,7 +1925,7 @@ static void __mt_gpufreq_volt_switch(unsigned int volt_old, unsigned int volt_ne
 		}
 		__mt_gpufreq_vgpu_volt_switch(VOLT_RISING, g_vgpu_sfchg_rrate, volt_old, volt_new);
 		gpufreq_pr_debug("@%s: [RISING] vgpu_volt = %d, vsram_gpu_volt = %d\n", __func__,
-				regulator_get_voltage(g_pmic->reg_vgpu), regulator_get_voltage(g_pmic->reg_vsram_gpu));
+				volt_new, vsram_volt_new);
 	} else if (volt_new < volt_old) {
 		__mt_gpufreq_vgpu_volt_switch(VOLT_FALLING, g_vgpu_sfchg_frate, volt_old, volt_new);
 		if (vsram_volt_new < vsram_volt_old) {
@@ -1951,7 +1933,7 @@ static void __mt_gpufreq_volt_switch(unsigned int volt_old, unsigned int volt_ne
 					vsram_volt_old, vsram_volt_new);
 		}
 		gpufreq_pr_debug("@%s: [FALLING] vgpu_volt = %d, vsram_gpu_volt = %d\n", __func__,
-				regulator_get_voltage(g_pmic->reg_vgpu), regulator_get_voltage(g_pmic->reg_vsram_gpu));
+				volt_new, vsram_volt_new);
 	}
 }
 
