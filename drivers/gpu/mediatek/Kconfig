@@ -54,7 +54,15 @@ config GPU_VERSION_MALI_MIDGARD_R26P0
 	bool "MIDGARD_R26P0"
 	select MALI_MIDGARD
 
+config GPU_VERSION_MALI_VALHALL_R56P0
+	bool "VALHALL_R56P0"
+	select MALI_MIDGARD
+
 config GPU_VERSION_IMG_M1_10ED5173305
 	bool "IMG_M1_10ED5173305"
 
 endchoice
+
+if GPU_VERSION_MALI_VALHALL_R56P0 || MTK_GPU_SUPPORT
+source "drivers/gpu/mediatek/gpu_mali/mali_valhall/mali-r56p0/drivers/gpu/arm/midgard/Kconfig"
+endif
