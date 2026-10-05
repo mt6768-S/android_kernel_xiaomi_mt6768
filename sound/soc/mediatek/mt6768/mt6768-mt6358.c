@@ -17,7 +17,7 @@
 #include "mt6768-afe-gpio.h"
 #include "../../codecs/mt6358.h"
 #include "../common/mtk-sp-spk-amp.h"
-#ifdef CONFIG_SND_SOC_FS18XX
+#ifdef CONFIG_SND_SOC_FS16XX
 #include "../fs1815n/fsm_public.h"
 #include "../fs1815n/fsm-dev.h"
 #endif
@@ -224,7 +224,7 @@ static int mt6768_mt6358_spk_amp_event(struct snd_soc_dapm_widget *w,
 		#endif
 		#endif
 		} else if (strcmp((const char *)get_audio_pa_vendor(), foursemi) == 0) {
-		#if defined(CONFIG_SND_SOC_FS18XX)
+		#if defined(CONFIG_SND_SOC_FS16XX)
 		fsm_speaker_onn(FSM_SCENE_MUSIC);
 		#endif
 		} else {
@@ -242,7 +242,7 @@ static int mt6768_mt6358_spk_amp_event(struct snd_soc_dapm_widget *w,
 		#endif
 		#endif
 		} else if (strcmp((const char *)get_audio_pa_vendor(), foursemi) == 0) {
-		#if defined(CONFIG_SND_SOC_FS18XX)
+		#if defined(CONFIG_SND_SOC_FS16XX)
 		fsm_speaker_off();
 		#endif
 		} else {
@@ -283,11 +283,11 @@ static int mt6768_mt6358_rcv_amp_event(struct snd_soc_dapm_widget *w,
 		}
 	} else if (strcmp((const char *)get_audio_pa_vendor(), foursemi) == 0) {
 		if (rcv_amp_mode) {
-			#if defined(CONFIG_SND_SOC_FS18XX)
+			#if defined(CONFIG_SND_SOC_FS16XX)
 			fsm_speaker_onn(FSM_SCENE_RCV);
 			#endif
 		} else {
-			#if defined(CONFIG_SND_SOC_FS18XX)
+			#if defined(CONFIG_SND_SOC_FS16XX)
 			fsm_speaker_onn(FSM_SCENE_MUSIC);
 			#endif
 		}
@@ -302,7 +302,7 @@ static int mt6768_mt6358_rcv_amp_event(struct snd_soc_dapm_widget *w,
 				    (char *)aw87xxx_mode_function[AW87XXX_OFF_MODE]);
 	#endif
 	} else if (strcmp((const char *)get_audio_pa_vendor(), foursemi) == 0) {
-	#if defined(CONFIG_SND_SOC_FS18XX)
+	#if defined(CONFIG_SND_SOC_FS16XX)
 		fsm_speaker_off();
 	#endif
 	} else {
