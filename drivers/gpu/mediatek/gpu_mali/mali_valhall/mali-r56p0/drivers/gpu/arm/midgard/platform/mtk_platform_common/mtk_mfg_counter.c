@@ -8,12 +8,25 @@
 #include <linux/mutex.h>
 #include <linux/slab.h>
 #include <linux/io.h>
-#include <linux/ktime.h>
 #include <linux/math64.h>
 #include <mali_kbase.h>
-#include <csf/mali_kbase_csf_defs.h>
-#include <csf/ipa_control/mali_kbase_csf_ipa_control.h>
+#include "hwcnt/mali_kbase_hwcnt_types.h"
+#include "hwcnt/mali_kbase_hwcnt_gpu.h"
+#include "hwcnt/mali_kbase_hwcnt_virtualizer.h"
 #include <platform/mtk_mfg_counter.h>
+
+#include "mali_kbase_gator_hwcnt_names_tnax.h"
+
+#define MALI_HWC_TYPES			4
+#define MALI_COUNTERS_PER_BLOCK		64
+
+/* gator hwc block classes, index the tNAx name table in 64-value windows */
+enum mtk_hwc_class {
+	JM_BLOCK = 0,
+	TILER_BLOCK,
+	SHADER_BLOCK,
+	MMU_L2_BLOCK,
+};
 
 /* GPU stall counter registers (infara bus monitor), unchanged from r32p1 */
 #if IS_ENABLED(CONFIG_MACH_MT6873) || IS_ENABLED(CONFIG_MACH_MT6853) || \
@@ -29,30 +42,6 @@
 #define OFFSET_STALL_GPU_M1_WR_CNT	0x208
 #define OFFSET_STALL_GPU_M1_RD_CNT	0x20c
 
-#define MFG_PMU_NAME_LEN	64
-
-struct mtk_hw_counter_desc {
-	const char *name;
-	enum kbase_ipa_core_type type;
-	u8 idx;
-};
-
-static const struct mtk_hw_counter_desc mtk_hw_counters[] = {
-	{ "TNAx_GPU_ACTIVE",            KBASE_IPA_CORE_TYPE_CSHW,   GPU_ACTIVE_CNT_IDX },
-	{ "TNAx_TILER_ACTIVE",          KBASE_IPA_CORE_TYPE_TILER,  2 },
-	{ "TNAx_EXEC_CORE_ACTIVE",      KBASE_IPA_CORE_TYPE_SHADER, 26 },
-	{ "TNAx_EXEC_INSTR_FMA",        KBASE_IPA_CORE_TYPE_SHADER, 27 },
-	{ "TNAx_TEX_FILT_NUM_OPERATIONS", KBASE_IPA_CORE_TYPE_SHADER, 39 },
-	{ "TNAx_LS_MEM_READ_FULL",      KBASE_IPA_CORE_TYPE_SHADER, 44 },
-	{ "TNAx_LS_MEM_READ_SHORT",     KBASE_IPA_CORE_TYPE_SHADER, 45 },
-	{ "TNAx_LS_MEM_WRITE_FULL",     KBASE_IPA_CORE_TYPE_SHADER, 46 },
-	{ "TNAx_LS_MEM_WRITE_SHORT",    KBASE_IPA_CORE_TYPE_SHADER, 47 },
-	{ "TNAx_LS_MEM_ATOMIC",         KBASE_IPA_CORE_TYPE_SHADER, 48 },
-	{ "TNAx_VARY_SLOT_32",          KBASE_IPA_CORE_TYPE_SHADER, 50 },
-	{ "TNAx_VARY_SLOT_16",          KBASE_IPA_CORE_TYPE_SHADER, 51 },
-};
-#define NR_HW_COUNTERS		ARRAY_SIZE(mtk_hw_counters)
-
 static DEFINE_MUTEX(counter_info_lock);
 
 static struct GPU_PMU *mali_pmus;
@@ -62,8 +51,15 @@ static uint32_t active_cycle;
 static unsigned int nr_shader_cores;
 
 static struct kbase_device *mfg_kbdev;
-static void *ipa_client;
-static u64 last_query_ns;
+static struct kbase_hwcnt_virtualizer_client *mfg_hvcli;
+static const struct kbase_hwcnt_metadata *mfg_metadata;
+static struct kbase_hwcnt_enable_map mfg_enable_map;
+static struct kbase_hwcnt_dump_buffer mfg_dump_buf;
+
+/* (block, value index) of each exposed PMU entry in the dump buffer */
+static u16 *mfg_pmu_blk;
+static u16 *mfg_pmu_val;
+static int mfg_nr_hw_pmus;
 
 static void __iomem *io_addr_gpu_stall;
 static unsigned int pre_stall_counters[4];
@@ -259,30 +255,13 @@ static uint32_t _read_var_u_rate(void)
 
 static uint32_t _read_counter_w_loading(const char *name)
 {
-	static struct {
-		const char *name;
-		int pos;
-	} cache[8];
-	int i, pos = -1;
+	int pos = -1;
 	uint32_t value = 0;
 
 	if (!mali_pmus)
 		return 0;
 
-	for (i = 0; i < ARRAY_SIZE(cache); i++) {
-		if (cache[i].name == name) {
-			pos = cache[i].pos;
-			break;
-		}
-		if (!cache[i].name) {
-			if (!_find_name_pos(name, &pos)) {
-				cache[i].name = name;
-				cache[i].pos = pos;
-			}
-			break;
-		}
-	}
-
+	_find_name_pos(name, &pos);
 	if (pos >= 0)
 		value = mali_pmus[pos].value;
 
@@ -396,100 +375,215 @@ static void _mtk_mfg_reset_counter(int ret)
 	}
 }
 
+static int _mtk_hwcnt_class_base(u64 blk_type)
+{
+	switch (blk_type) {
+	case KBASE_HWCNT_GPU_V5_BLOCK_TYPE_PERF_FE:
+		return JM_BLOCK * MALI_COUNTERS_PER_BLOCK;
+	case KBASE_HWCNT_GPU_V5_BLOCK_TYPE_PERF_TILER:
+		return TILER_BLOCK * MALI_COUNTERS_PER_BLOCK;
+	case KBASE_HWCNT_GPU_V5_BLOCK_TYPE_PERF_SC:
+		return SHADER_BLOCK * MALI_COUNTERS_PER_BLOCK;
+	case KBASE_HWCNT_GPU_V5_BLOCK_TYPE_PERF_MEMSYS:
+		return MMU_L2_BLOCK * MALI_COUNTERS_PER_BLOCK;
+	default:
+		return -1;
+	}
+}
+
 static int _mtk_mfg_init_counter(void)
 {
-	struct kbase_ipa_control_perf_counter counters[NR_HW_COUNTERS];
 	struct kbase_device *kbdev;
-	int i, err;
+	struct kbase_hwcnt_virtualizer *hvirt;
+	size_t blk, val, cnt = 0;
+	bool class_seen[MALI_HWC_TYPES] = { false };
+	int err;
 
 	kbdev = kbase_find_device(-1);
 	if (!kbdev)
 		return PMU_NG;
 
-	for (i = 0; i < NR_HW_COUNTERS; i++) {
-		counters[i].scaling_factor = 1;
-		counters[i].gpu_norm = false;
-		counters[i].type = mtk_hw_counters[i].type;
-		counters[i].idx = mtk_hw_counters[i].idx;
+	hvirt = kbdev->hwcnt_gpu_virt;
+	if (!hvirt)
+		goto err_dev;
+
+	mfg_metadata = kbase_hwcnt_virtualizer_metadata(hvirt);
+	if (!mfg_metadata)
+		goto err_dev;
+
+	err = kbase_hwcnt_enable_map_alloc(mfg_metadata, &mfg_enable_map);
+	if (err)
+		goto err_dev;
+
+	kbase_hwcnt_enable_map_enable_all(&mfg_enable_map);
+
+	err = kbase_hwcnt_virtualizer_client_create(hvirt, &mfg_enable_map, &mfg_hvcli);
+	if (err)
+		goto err_map;
+
+	err = kbase_hwcnt_dump_buffer_alloc(mfg_metadata, &mfg_dump_buf);
+	if (err)
+		goto err_cli;
+
+	if (binited)
+		return PMU_OK;
+
+	/* one entry per non-empty tNAx name, first instance of each class */
+	mfg_nr_hw_pmus = 0;
+	for (blk = 0; blk < mfg_metadata->blk_cnt; blk++) {
+		int base = _mtk_hwcnt_class_base(
+			kbase_hwcnt_metadata_block_type(mfg_metadata, blk));
+		size_t val_cnt;
+
+		if (base < 0)
+			continue;
+		if (class_seen[base / MALI_COUNTERS_PER_BLOCK])
+			continue;
+		class_seen[base / MALI_COUNTERS_PER_BLOCK] = true;
+
+		val_cnt = kbase_hwcnt_metadata_block_values_count(mfg_metadata, blk);
+		if (val_cnt > MALI_COUNTERS_PER_BLOCK)
+			val_cnt = MALI_COUNTERS_PER_BLOCK;
+
+		for (val = 0; val < val_cnt; val++) {
+			if (hardware_counters_mali_tNAx[base + val][0] == '\0')
+				continue;
+			mfg_nr_hw_pmus++;
+		}
 	}
 
-	err = kbase_ipa_control_register(kbdev, counters, NR_HW_COUNTERS, &ipa_client);
-	if (err) {
-		pr_info("[PMU] ipa_control register failed: %d\n", err);
-		kbase_release_device(kbdev);
-		return PMU_NG;
+	if (!mfg_nr_hw_pmus)
+		goto err_buf;
+
+	number_of_hardware_counters = mfg_nr_hw_pmus + MFG_MTK_COUNTER_SIZE;
+	mali_pmus = kcalloc(number_of_hardware_counters,
+			    sizeof(struct GPU_PMU), GFP_KERNEL);
+	mfg_pmu_blk = kcalloc(mfg_nr_hw_pmus, sizeof(u16), GFP_KERNEL);
+	mfg_pmu_val = kcalloc(mfg_nr_hw_pmus, sizeof(u16), GFP_KERNEL);
+	if (!mali_pmus || !mfg_pmu_blk || !mfg_pmu_val)
+		goto err_mem;
+
+	memset(class_seen, 0, sizeof(class_seen));
+	cnt = 0;
+	for (blk = 0; blk < mfg_metadata->blk_cnt; blk++) {
+		int base = _mtk_hwcnt_class_base(
+			kbase_hwcnt_metadata_block_type(mfg_metadata, blk));
+		size_t val_cnt;
+
+		if (base < 0)
+			continue;
+		if (class_seen[base / MALI_COUNTERS_PER_BLOCK])
+			continue;
+		class_seen[base / MALI_COUNTERS_PER_BLOCK] = true;
+
+		val_cnt = kbase_hwcnt_metadata_block_values_count(mfg_metadata, blk);
+		if (val_cnt > MALI_COUNTERS_PER_BLOCK)
+			val_cnt = MALI_COUNTERS_PER_BLOCK;
+
+		for (val = 0; val < val_cnt; val++) {
+			const char *name = hardware_counters_mali_tNAx[base + val];
+
+			if (name[0] == '\0')
+				continue;
+			mali_pmus[cnt].id = cnt;
+			mali_pmus[cnt].name = name;
+			mfg_pmu_blk[cnt] = (u16)blk;
+			mfg_pmu_val[cnt] = (u16)val;
+			cnt++;
+		}
+	}
+
+	for (val = 0; val < MFG_MTK_COUNTER_SIZE; val++) {
+		mali_pmus[cnt].id = cnt;
+		mali_pmus[cnt].name = mfg_mtk_counters[val].name;
+		cnt++;
 	}
 
 	mfg_kbdev = kbdev;
 	nr_shader_cores = kbdev->gpu_props.num_cores;
+	binited = 1;
 
-	if (!binited) {
-		number_of_hardware_counters = NR_HW_COUNTERS + MFG_MTK_COUNTER_SIZE;
-		mali_pmus = kcalloc(number_of_hardware_counters,
-				    sizeof(struct GPU_PMU), GFP_KERNEL);
-		if (!mali_pmus) {
-			kbase_ipa_control_unregister(kbdev, ipa_client);
-			kbase_release_device(kbdev);
-			mfg_kbdev = NULL;
-			ipa_client = NULL;
-			return PMU_NG;
-		}
-
-		for (i = 0; i < NR_HW_COUNTERS; i++) {
-			mali_pmus[i].id = i;
-			mali_pmus[i].name = mtk_hw_counters[i].name;
-		}
-		for (i = 0; i < MFG_MTK_COUNTER_SIZE; i++) {
-			mali_pmus[NR_HW_COUNTERS + i].id = NR_HW_COUNTERS + i;
-			mali_pmus[NR_HW_COUNTERS + i].name = mfg_mtk_counters[i].name;
-		}
-		binited = 1;
-	}
-
-	last_query_ns = ktime_get_ns();
 	return PMU_OK;
+
+err_mem:
+	kfree(mali_pmus);
+	kfree(mfg_pmu_blk);
+	kfree(mfg_pmu_val);
+	mali_pmus = NULL;
+	mfg_pmu_blk = NULL;
+	mfg_pmu_val = NULL;
+err_buf:
+	kbase_hwcnt_dump_buffer_free(&mfg_dump_buf);
+err_cli:
+	kbase_hwcnt_virtualizer_client_destroy(mfg_hvcli);
+	mfg_hvcli = NULL;
+err_map:
+	kbase_hwcnt_enable_map_free(&mfg_enable_map);
+err_dev:
+	kbase_release_device(kbdev);
+	return PMU_NG;
 }
 
 static int _mtk_mfg_update_counter(void)
 {
-	u64 values[NR_HW_COUNTERS];
-	u64 now_ns, elapsed_us;
+	u64 ts_start_ns, ts_end_ns, elapsed_us;
 	uint32_t gpu_freq;
-	int i, err, ret = PMU_OK;
+	int i, err;
 
-	if (!ipa_client || !mfg_kbdev)
+	if (!mfg_hvcli)
 		return PMU_NG;
 
-	now_ns = ktime_get_ns();
-	elapsed_us = div_u64(now_ns - last_query_ns, NSEC_PER_USEC);
-
-	err = kbase_ipa_control_query(mfg_kbdev, ipa_client, values,
-				      NR_HW_COUNTERS, NULL);
+	err = kbase_hwcnt_virtualizer_client_dump(mfg_hvcli, &ts_start_ns,
+						  &ts_end_ns, &mfg_dump_buf);
 	if (err)
 		return PMU_NG;
 
-	last_query_ns = now_ns;
+	elapsed_us = div_u64(ts_end_ns - ts_start_ns, NSEC_PER_USEC);
 
 	_mtk_mfg_reset_counter(1);
 
-	for (i = 0; i < NR_HW_COUNTERS; i++)
-		mali_pmus[i].value = (uint32_t)values[i];
+	for (i = 0; i < mfg_nr_hw_pmus; i++) {
+		const u64 *blk_buf = kbase_hwcnt_dump_buffer_block_instance(
+			&mfg_dump_buf, mfg_pmu_blk[i], 0);
+
+		mali_pmus[i].value = (uint32_t)blk_buf[mfg_pmu_val[i]];
+	}
 
 	gpu_freq = mt_gpufreq_get_cur_freq();
 	active_cycle = (uint32_t)div_u64((u64)gpu_freq * elapsed_us, 1000);
 
-	if (!mali_pmus[0].value) /* GPU_ACTIVE == 0, all counters invalid */
-		return PMU_RESET_VALUE;
+	/* GPU_ACTIVE == 0, all counters invalid */
+	{
+		int pos = -1;
+
+		_find_name_pos("GPU_ACTIVE", &pos);
+		if (pos >= 0 && !mali_pmus[pos].value)
+			return PMU_RESET_VALUE;
+	}
 
 	for (i = 0; i < MFG_MTK_COUNTER_SIZE; i++) {
 		uint32_t v = mfg_mtk_counters[i].read();
 
 		if (!v)
 			return PMU_RESET_VALUE;
-		mali_pmus[NR_HW_COUNTERS + i].value = v;
+		mali_pmus[mfg_nr_hw_pmus + i].value = v;
 	}
 
-	return ret;
+	return PMU_OK;
+}
+
+static void _mtk_mfg_term_counter(void)
+{
+	if (mfg_hvcli) {
+		kbase_hwcnt_virtualizer_client_destroy(mfg_hvcli);
+		mfg_hvcli = NULL;
+	}
+	kbase_hwcnt_dump_buffer_free(&mfg_dump_buf);
+	kbase_hwcnt_enable_map_free(&mfg_enable_map);
+	if (mfg_kbdev) {
+		kbase_release_device(mfg_kbdev);
+		mfg_kbdev = NULL;
+	}
 }
 
 static int mali_get_gpu_pmu_init(struct GPU_PMU *pmus, int pmu_size, int *ret_size)
@@ -563,10 +657,7 @@ static int mali_get_gpu_pmu_swapnreset_stop(void)
 	}
 
 	mutex_lock(&counter_info_lock);
-	if (ipa_client && mfg_kbdev) {
-		kbase_ipa_control_unregister(mfg_kbdev, ipa_client);
-		ipa_client = NULL;
-	}
+	_mtk_mfg_term_counter();
 	mutex_unlock(&counter_info_lock);
 
 	return PMU_OK;
@@ -580,16 +671,13 @@ int mali_get_gpu_pmu_deinit(void)
 	}
 
 	mutex_lock(&counter_info_lock);
-	if (ipa_client && mfg_kbdev) {
-		kbase_ipa_control_unregister(mfg_kbdev, ipa_client);
-		ipa_client = NULL;
-	}
-	if (mfg_kbdev) {
-		kbase_release_device(mfg_kbdev);
-		mfg_kbdev = NULL;
-	}
+	_mtk_mfg_term_counter();
 	kfree(mali_pmus);
+	kfree(mfg_pmu_blk);
+	kfree(mfg_pmu_val);
 	mali_pmus = NULL;
+	mfg_pmu_blk = NULL;
+	mfg_pmu_val = NULL;
 	binited = 0;
 	mutex_unlock(&counter_info_lock);
 
@@ -613,9 +701,9 @@ int mtk_mfg_pmu_start(void)
 void mtk_mfg_pmu_stop(void)
 {
 	mutex_lock(&counter_info_lock);
-	if (ipa_client && mfg_kbdev) {
-		kbase_ipa_control_unregister(mfg_kbdev, ipa_client);
-		ipa_client = NULL;
+	if (mfg_hvcli) {
+		kbase_hwcnt_virtualizer_client_destroy(mfg_hvcli);
+		mfg_hvcli = NULL;
 	}
 	mutex_unlock(&counter_info_lock);
 }
