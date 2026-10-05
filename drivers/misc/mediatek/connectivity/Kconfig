@@ -315,6 +315,14 @@ config MTK_COMBO_BT
 	help
 	  MTK BT /dev/stpbt driver for Bluedroid
 
+config MTK_BT_AUDIO_TRANSPORT
+	bool "Larger MediaTek Bluetooth transport buffer"
+	depends on MTK_COMBO_BT
+	default n
+	help
+	  Permit 4096-byte HCI transfers instead of 2048-byte transfers.
+	  This does not select or force an A2DP codec bitrate.
+
 config MTK_COMBO_ANT
 	tristate "MediaTek Combo Chip ANT driver"
 	depends on MTK_COMBO
@@ -338,6 +346,15 @@ config MTK_COMBO_WIFI
 	depends on MTK_COMBO
 	select WIRELESS_EXT
 	select WEXT_PRIV
+
+config MTK_WLAN_WOWLAN_KEEPALIVE
+	bool "MediaTek WoWLAN link retention profile"
+	depends on MTK_COMBO_WIFI
+	default n
+	help
+	  Wake for disconnect or beacon loss and allow ARP while the
+	  firmware is in WoWLAN. Packet keep-alive requests still come from
+	  the existing Wi-Fi vendor command interface.
 
 config MTK_PASSPOINT_R1_SUPPORT
 	bool "MTK_PASSPOINT_R1_SUPPORT"

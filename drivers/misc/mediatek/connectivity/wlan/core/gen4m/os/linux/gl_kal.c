@@ -7633,6 +7633,11 @@ void kalWowProcess(IN struct GLUE_INFO *prGlueInfo,
 				       WOWLAN_FF_SEND_MAGIC_TO_HOST |
 				       WOWLAN_FF_ALLOW_1X |
 				       WOWLAN_FF_ALLOW_ARP_REQ2ME;
+#ifdef CONFIG_MTK_WLAN_WOWLAN_KEEPALIVE
+		rCmdWowlanParam.ucDetectType |= WOWLAN_DETECT_TYPE_DISASSOCIATION |
+					     WOWLAN_DETECT_TYPE_BCN_LOST;
+		rCmdWowlanParam.u2FilterFlag |= WOWLAN_FF_ALLOW_ARP;
+#endif
 	} else {
 		rCmdWowlanParam.ucCmd = PM_WOWLAN_REQ_STOP;
 	}

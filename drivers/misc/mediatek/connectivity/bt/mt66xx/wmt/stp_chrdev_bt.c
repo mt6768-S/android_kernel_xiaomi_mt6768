@@ -30,7 +30,11 @@ MODULE_LICENSE("Dual BSD/GPL");
 #define COMBO_IOCTL_BT_IC_FW_VER    _IOR(COMBO_IOC_MAGIC, 3, void*)
 #define COMBO_IOCTL_BT_HOST_DEBUG	_IOW(COMBO_IOC_MAGIC, 4, void*)
 
+#ifdef CONFIG_MTK_BT_AUDIO_TRANSPORT
+#define BT_BUFFER_SIZE              4096
+#else
 #define BT_BUFFER_SIZE              2048
+#endif
 #define FTRACE_STR_LOG_SIZE         256
 #define REG_READL(addr) readl((volatile uint32_t *)(addr))
 
