@@ -1,0 +1,29 @@
+# SPDX-License-Identifier: GPL-2.0
+#
+# (C) COPYRIGHT 2012-2021 ARM Limited. All rights reserved.
+# Copyright (c) 2021 MediaTek Inc.
+#
+
+mali_kbase-y += \
+	platform/$(MALI_PLATFORM_DIR)/mali_kbase_config_mt6768.o \
+	platform/$(MALI_PLATFORM_DIR)/mali_kbase_cpu_mt6768.o \
+	platform/mtk_platform_common/mtk_platform_common.o \
+	platform/mtk_platform_common/mtk_gpu_dvfs.o \
+	platform/mtk_platform_common/mtk_mfg_counter.o \
+	platform/mtk_platform_common/mtk_gpu_power_sspm_ipi.o
+
+ccflags-$(CONFIG_MTK_GPU_COMMON_DVFS_SUPPORT) += -DCONFIG_MTK_GPU_COMMON_DVFS
+
+ccflags-y += \
+	-I$(srctree)/drivers/misc/mediatek/base/power/include \
+	-I$(srctree)/drivers/misc/mediatek/base/power/mt6768 \
+	-I$(srctree)/drivers/gpu/mediatek \
+	-I$(srctree)/drivers/gpu/mediatek/gpufreq \
+	-I$(srctree)/drivers/gpu/mediatek/gpufreq/mt6768 \
+	-I$(srctree)/drivers/gpu/mediatek/ged/include \
+	-I$(src)/platform \
+	-I$(src)/platform/mtk_platform_common
+
+ifeq ($(CONFIG_MTK_TINYSYS_SSPM_SUPPORT), y)
+ccflags-y += -I$(srctree)/drivers/misc/mediatek/sspm/v1/
+endif

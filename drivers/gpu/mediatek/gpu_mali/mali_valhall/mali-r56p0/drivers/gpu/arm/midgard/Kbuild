@@ -117,7 +117,7 @@ endif
 #
 # ccflags
 #
-ccflags-y = \
+ccflags-y += \
     -DMALI_CUSTOMER_RELEASE=$(MALI_CUSTOMER_RELEASE) \
     -DMALI_USE_CSF=$(MALI_USE_CSF) \
     -DMALI_KERNEL_TEST_API=$(MALI_KERNEL_TEST_API) \
@@ -139,8 +139,11 @@ endif
 ccflags-y += \
     -I$(srctree)/include/linux \
     -I$(srctree)/drivers/staging/android \
+    -I$(srctree)/drivers/gpu/mediatek/ged/include \
     -I$(src) \
+    -I$(src)/platform \
     -I$(src)/platform/$(MALI_PLATFORM_DIR) \
+    -I$(src)/platform/mtk_platform_common \
     -I$(src)/../../../base \
     -I$(src)/../../../../include
 

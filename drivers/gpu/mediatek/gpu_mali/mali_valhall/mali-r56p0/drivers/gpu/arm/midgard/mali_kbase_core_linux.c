@@ -77,6 +77,10 @@
 #include "mali_kbase_pbha_debugfs.h"
 #endif
 
+#if defined(CONFIG_MACH_MT6768) || defined(CONFIG_MACH_MT6785)
+#include <platform/mtk_platform_common.h>
+#endif
+
 #include <linux/module.h>
 #include <linux/init.h>
 #include <linux/poll.h>
@@ -5922,6 +5926,13 @@ static void kbase_platform_device_remove(struct platform_device *pdev)
 		return;
 #endif
 
+#if IS_ENABLED(CONFIG_PROC_FS)
+	mtk_common_procfs_exit();
+#endif
+#if defined(CONFIG_MACH_MT6768) || defined(CONFIG_MACH_MT6785)
+	mtk_platform_device_term(kbdev);
+	mtk_common_device_term(kbdev);
+#endif
 	kbase_device_term(kbdev);
 	dev_set_drvdata(kbdev->dev, NULL);
 	kbase_device_free(kbdev);
@@ -5973,6 +5984,10 @@ static int kbase_platform_device_probe(struct platform_device *pdev)
 #endif /* IS_ENABLED(CONFIG_REGULATOR) */
 
 	dev_set_drvdata(kbdev->dev, kbdev);
+#if defined(CONFIG_MACH_MT6768) || defined(CONFIG_MACH_MT6785)
+	err |= mtk_common_device_init(kbdev);
+	err |= mtk_platform_device_init(kbdev);
+#endif
 #if (KERNEL_VERSION(5, 3, 0) <= LINUX_VERSION_CODE)
 	mutex_lock(&kbase_probe_mutex);
 #endif
@@ -5990,6 +6005,9 @@ static int kbase_platform_device_probe(struct platform_device *pdev)
 		mutex_unlock(&kbase_probe_mutex);
 #endif
 	} else {
+#if IS_ENABLED(CONFIG_PROC_FS)
+		mtk_common_procfs_init();
+#endif
 #if (KERNEL_VERSION(6, 1, 0) <= LINUX_VERSION_CODE)
 		/* Since upstream is not exporting mmap_min_addr, kbase at the
 		 * moment is unable to track possible kernel changes via sysfs.
