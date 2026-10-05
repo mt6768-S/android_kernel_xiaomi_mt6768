@@ -5,6 +5,7 @@
 
 #include <linux/io.h>
 #include <mali_kbase.h>
+#include <mtk_gpufreq.h>
 #include "mali_kbase_cpu_mt6768.h"
 
 #define HZ_IN_MHZ (1000000)
@@ -230,38 +231,20 @@ static u32 kbase_get_platform_logic_tile_type(void)
 
 u32 kbase_get_platform_min_freq(void)
 {
-	u32 ve_logic_tile = kbase_get_platform_logic_tile_type();
+	unsigned int num = mt_gpufreq_get_dvfs_table_num();
 
-	switch (ve_logic_tile) {
-	case 0x217:
-		/* Virtex 6, HBI0217 */
-		return VE_VIRTEX6_GPU_FREQ_MIN;
-	case 0x247:
-		/* Virtex 7, HBI0247 */
-		return VE_VIRTEX7_GPU_FREQ_MIN;
-	default:
-		/* all other logic tiles, i.e., Virtex 5 HBI0192 */
-		/* or unsuccessful reading from the platform - */
-		/* fall back to some default value */
-		return VE_DEFAULT_GPU_FREQ_MIN;
-	}
+	if (num > 0)
+		return mt_gpufreq_get_freq_by_idx(num - 1);
+
+	return VE_DEFAULT_GPU_FREQ_MIN;
 }
 
 u32 kbase_get_platform_max_freq(void)
 {
-	u32 ve_logic_tile = kbase_get_platform_logic_tile_type();
+	unsigned int max_freq = mt_gpufreq_get_freq_by_idx(0);
 
-	switch (ve_logic_tile) {
-	case 0x217:
-		/* Virtex 6, HBI0217 */
-		return VE_VIRTEX6_GPU_FREQ_MAX;
-	case 0x247:
-		/* Virtex 7, HBI0247 */
-		return VE_VIRTEX7_GPU_FREQ_MAX;
-	default:
-		/* all other logic tiles, i.e., Virtex 5 HBI0192 */
-		/* or unsuccessful reading from the platform - */
-		/* fall back to some default value */
-		return VE_DEFAULT_GPU_FREQ_MAX;
-	}
+	if (max_freq > 0)
+		return max_freq;
+
+	return VE_DEFAULT_GPU_FREQ_MAX;
 }

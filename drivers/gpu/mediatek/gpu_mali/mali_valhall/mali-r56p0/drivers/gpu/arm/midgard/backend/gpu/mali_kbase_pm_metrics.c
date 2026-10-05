@@ -397,14 +397,19 @@ void kbase_pm_get_dvfs_action(struct kbase_device *kbdev)
 
 bool kbase_pm_metrics_is_active(struct kbase_device *kbdev)
 {
+#if IS_ENABLED(CONFIG_MTK_GPU_COMMON_DVFS)
+	return false;
+#else
 	KBASE_DEBUG_ASSERT(kbdev != NULL);
 
 	return atomic_read(&kbdev->pm.backend.metrics.timer_state) == TIMER_ON;
+#endif
 }
 KBASE_EXPORT_TEST_API(kbase_pm_metrics_is_active);
 
 void kbase_pm_metrics_start(struct kbase_device *kbdev)
 {
+#if !IS_ENABLED(CONFIG_MTK_GPU_COMMON_DVFS)
 	struct kbasep_pm_metrics_state *metrics = &kbdev->pm.backend.metrics;
 
 	if (unlikely(!metrics->initialized))
@@ -415,15 +420,18 @@ void kbase_pm_metrics_start(struct kbase_device *kbdev)
 		/* Start the timer only if it's been fully stopped (transition d)*/
 		hrtimer_start(&metrics->timer, HR_TIMER_DELAY_MSEC(kbdev->pm.dvfs_period),
 			      HRTIMER_MODE_REL);
+#endif
 }
 
 void kbase_pm_metrics_stop(struct kbase_device *kbdev)
 {
+#if !IS_ENABLED(CONFIG_MTK_GPU_COMMON_DVFS)
 	if (unlikely(!kbdev->pm.backend.metrics.initialized))
 		return;
 
 	/* Timer is Stopped if its currently on (transition a) */
 	atomic_cmpxchg(&kbdev->pm.backend.metrics.timer_state, TIMER_ON, TIMER_STOPPED);
+#endif
 }
 
 #endif /* CONFIG_MALI_MIDGARD_DVFS */
