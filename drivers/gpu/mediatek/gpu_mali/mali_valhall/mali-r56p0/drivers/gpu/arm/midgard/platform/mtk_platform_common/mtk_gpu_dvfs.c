@@ -14,17 +14,15 @@
 #include "mtk_gpu_dvfs.h"
 
 static unsigned int current_util_active;
+static unsigned int current_util_3d;
+static unsigned int current_util_compute;
 
 #if IS_ENABLED(CONFIG_MTK_GED_SUPPORT)
 static struct kbasep_pm_metrics ged_last_metrics;
 
-static unsigned int mtk_get_gpu_freq(void)
+static unsigned int mtk_dvfs_get_gpu_freq_khz(void)
 {
-	struct kbase_device *kbdev = mtk_common_get_kbdev();
-
-	if (kbdev)
-		return (unsigned int)(kbdev->current_nominal_freq / 1000);
-	return 0;
+	return mt_gpufreq_get_cur_freq();
 }
 #endif
 
@@ -46,6 +44,7 @@ void mtk_common_cal_gpu_utilization(unsigned int *pui32Loading,
 	struct kbase_device *kbdev = mtk_common_get_kbdev();
 	struct kbasep_pm_metrics diff;
 	u64 total_time;
+	unsigned int busy;
 	unsigned int utilisation = 0;
 
 	if (!kbdev)
@@ -61,7 +60,11 @@ void mtk_common_cal_gpu_utilization(unsigned int *pui32Loading,
 	if (utilisation > 100)
 		utilisation = 100;
 
+	busy = max(diff.busy_gl + diff.busy_cl[0] + diff.busy_cl[1], 1u);
+
 	current_util_active = utilisation;
+	current_util_3d = (100 * diff.busy_gl) / busy;
+	current_util_compute = (100 * (diff.busy_cl[0] + diff.busy_cl[1])) / busy;
 
 	if (pui32Loading)
 		*pui32Loading = utilisation;
@@ -72,7 +75,7 @@ void mtk_common_cal_gpu_utilization(unsigned int *pui32Loading,
 	if (pui32Idle)
 		*pui32Idle = 100 - utilisation;
 }
-#endif /* CONFIG_MTK_GED_SUPPORT && CONFIG_MTK_GPU_COMMON_DVFS */
+#endif
 
 int mtk_common_get_util_active(void)
 {
@@ -81,7 +84,7 @@ int mtk_common_get_util_active(void)
 
 int mtk_common_get_util_3d(void)
 {
-	return 0;
+	return (int)current_util_3d;
 }
 
 int mtk_common_get_util_ta(void)
@@ -91,7 +94,7 @@ int mtk_common_get_util_ta(void)
 
 int mtk_common_get_util_compute(void)
 {
-	return 0;
+	return (int)current_util_compute;
 }
 
 #if IS_ENABLED(CONFIG_MTK_GED_SUPPORT)
@@ -106,7 +109,7 @@ int mtk_common_dvfs_init(struct kbase_device *kbdev)
 	ged_dvfs_cal_gpu_utilization_fp = mtk_common_cal_gpu_utilization;
 	ged_dvfs_gpu_freq_commit_fp = mtk_common_ged_dvfs_commit;
 #endif
-	mtk_get_gpu_freq_fp = mtk_get_gpu_freq;
+	mtk_get_gpu_freq_fp = mtk_dvfs_get_gpu_freq_khz;
 
 	return 0;
 }
@@ -119,5 +122,7 @@ void mtk_common_dvfs_term(struct kbase_device *kbdev)
 #endif
 	mtk_get_gpu_freq_fp = NULL;
 	current_util_active = 0;
+	current_util_3d = 0;
+	current_util_compute = 0;
 }
-#endif /* CONFIG_MTK_GED_SUPPORT */
+#endif
