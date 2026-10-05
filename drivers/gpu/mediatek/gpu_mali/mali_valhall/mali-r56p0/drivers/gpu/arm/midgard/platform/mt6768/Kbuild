@@ -14,6 +14,8 @@ mali_kbase-y += \
 
 ccflags-$(CONFIG_MTK_GPU_COMMON_DVFS_SUPPORT) += -DCONFIG_MTK_GPU_COMMON_DVFS
 
+ccflags-y += -DDEFAULT_PM_DVFS_PERIOD=1000
+
 ccflags-y += \
 	-I$(srctree)/drivers/misc/mediatek/base/power/include \
 	-I$(srctree)/drivers/misc/mediatek/base/power/mt6768 \
