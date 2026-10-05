@@ -302,6 +302,16 @@ unsigned int mt_gpufreq_target(unsigned int request_idx, bool is_real_idx)
 		return -1;
 	}
 
+	/* fast path: nothing to do and no override/limiter is active */
+	if (target_idx == g_cur_opp_idx &&
+	    !g_fixed_freq_volt_state && !g_opp_stress_test_state &&
+	    !g_keep_opp_freq_state &&
+	    g_max_limited_idx == g_max_opp_idx_num &&
+	    !g_DVFS_is_paused_by_ptpod) {
+		mutex_unlock(&mt_gpufreq_lock);
+		return 0;
+	}
+
 	/* If /proc/gpufreq/gpufreq_fixed_freq_volt fix freq and volt */
 	if (g_fixed_freq_volt_state) {
 		gpufreq_pr_debug("@%s: fixed_freq: %d, fixed_volt: %d (skipped)\n",
