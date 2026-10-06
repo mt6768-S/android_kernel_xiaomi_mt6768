@@ -75,6 +75,25 @@ void mtk_common_cal_gpu_utilization(unsigned int *pui32Loading,
 	if (pui32Idle)
 		*pui32Idle = 100 - utilisation;
 }
+
+#ifdef GED_ENABLE_DVFS_LOADING_MODE
+void mtk_common_cal_gpu_utilization_ex(unsigned int *pui32Loading,
+				       unsigned int *pui32Block,
+				       unsigned int *pui32Idle,
+				       void *Util_Ex)
+{
+	struct GpuUtilization_Ex *util_ex = (struct GpuUtilization_Ex *)Util_Ex;
+
+	mtk_common_cal_gpu_utilization(pui32Loading, pui32Block, pui32Idle);
+
+	if (util_ex) {
+		util_ex->util_active = current_util_active;
+		util_ex->util_3d = current_util_3d;
+		util_ex->util_ta = 0;
+		util_ex->util_compute = current_util_compute;
+	}
+}
+#endif
 #endif
 
 int mtk_common_get_util_active(void)
@@ -106,7 +125,11 @@ int mtk_common_dvfs_init(struct kbase_device *kbdev)
 		return -EINVAL;
 
 #if IS_ENABLED(CONFIG_MTK_GPU_COMMON_DVFS)
+#ifdef GED_ENABLE_DVFS_LOADING_MODE
+	ged_dvfs_cal_gpu_utilization_ex_fp = mtk_common_cal_gpu_utilization_ex;
+#else
 	ged_dvfs_cal_gpu_utilization_fp = mtk_common_cal_gpu_utilization;
+#endif
 	ged_dvfs_gpu_freq_commit_fp = mtk_common_ged_dvfs_commit;
 #endif
 	mtk_get_gpu_freq_fp = mtk_dvfs_get_gpu_freq_khz;
@@ -117,7 +140,11 @@ int mtk_common_dvfs_init(struct kbase_device *kbdev)
 void mtk_common_dvfs_term(struct kbase_device *kbdev)
 {
 #if IS_ENABLED(CONFIG_MTK_GPU_COMMON_DVFS)
+#ifdef GED_ENABLE_DVFS_LOADING_MODE
+	ged_dvfs_cal_gpu_utilization_ex_fp = NULL;
+#else
 	ged_dvfs_cal_gpu_utilization_fp = NULL;
+#endif
 	ged_dvfs_gpu_freq_commit_fp = NULL;
 #endif
 	mtk_get_gpu_freq_fp = NULL;

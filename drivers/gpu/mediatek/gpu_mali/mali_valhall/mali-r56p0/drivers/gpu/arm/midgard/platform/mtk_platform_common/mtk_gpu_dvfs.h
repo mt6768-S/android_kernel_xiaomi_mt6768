@@ -17,13 +17,24 @@ struct kbase_device;
 void mtk_common_cal_gpu_utilization(unsigned int *pui32Loading,
 				    unsigned int *pui32Block,
 				    unsigned int *pui32Idle);
-void mtk_common_ged_dvfs_commit(unsigned long ui32NewFreqID,
-				GED_DVFS_COMMIT_TYPE eCommitType,
-				int *pbCommited);
+#ifdef GED_ENABLE_DVFS_LOADING_MODE
+void mtk_common_cal_gpu_utilization_ex(unsigned int *pui32Loading,
+				       unsigned int *pui32Block,
+				       unsigned int *pui32Idle,
+				       void *Util_Ex);
 
+extern void (*ged_dvfs_cal_gpu_utilization_ex_fp)(unsigned int *pui32Loading,
+						  unsigned int *pui32Block,
+						  unsigned int *pui32Idle,
+						  void *Util_Ex);
+#else
 extern void (*ged_dvfs_cal_gpu_utilization_fp)(unsigned int *pui32Loading,
 					       unsigned int *pui32Block,
 					       unsigned int *pui32Idle);
+#endif
+void mtk_common_ged_dvfs_commit(unsigned long ui32NewFreqID,
+				GED_DVFS_COMMIT_TYPE eCommitType,
+				int *pbCommited);
 extern void (*ged_dvfs_gpu_freq_commit_fp)(unsigned long ui32NewFreqID,
 					   GED_DVFS_COMMIT_TYPE eCommitType,
 					   int *pbCommited);

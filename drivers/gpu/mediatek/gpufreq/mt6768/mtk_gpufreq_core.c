@@ -2591,6 +2591,9 @@ static void __mt_gpufreq_setup_opp_table(struct g_opp_table_info *freqs, int num
 	g_limiter = -1;
 	g_DVFS_off_by_ptpod_idx = g_segment_max_opp_idx;
 
+	g_pbm_limited_ignore_state = true;
+	g_limited_ignore_array[IDX_PBM_LIMITED] = true;
+
 	g_ptpod_opp_idx_table = g_ptpod_opp_idx_table_segment;
 	g_ptpod_opp_idx_num = ARRAY_SIZE(g_ptpod_opp_idx_table_segment);
 
