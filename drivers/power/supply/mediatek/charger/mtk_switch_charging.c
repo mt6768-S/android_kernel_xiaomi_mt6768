@@ -283,6 +283,12 @@ static void swchg_select_charging_current_limit(struct charger_manager *info)
 		mtk_pe_set_charging_current(info,
 					&pdata->charging_current_limit,
 					&pdata->input_current_limit);
+		/* selene: an HVDCP adapter raised VBUS to 9V; use the Xiaomi
+		 * HVDCP_CHARGER limits (2A in, 3A to the battery). */
+		if (battery_get_vbus() > 7000) {
+			pdata->input_current_limit = 2000000;
+			pdata->charging_current_limit = 3000000;
+		}
 	} else if (info->chr_type == CHARGING_HOST) {
 		pdata->input_current_limit =
 				info->data.charging_host_charger_current;

@@ -1339,7 +1339,10 @@ static int bq2589x_init_device(struct bq2589x *bq)
 
     /*common initialization*/
 
-	bq2589x_update_bits(bq, BQ2589X_REG_02, BQ2589X_HVDCPEN_MASK, 0);
+	/* selene: let the bq25890 run the HVDCP (QC 9V) handshake after DCP
+	 * detection, as the Xiaomi kernel does; MaxCharge stays off. */
+	bq2589x_update_bits(bq, BQ2589X_REG_02, BQ2589X_HVDCPEN_MASK,
+			    BQ2589X_HVDCP_ENABLE << BQ2589X_HVDCPEN_SHIFT);
 	bq2589x_update_bits(bq, BQ2589X_REG_02, BQ2589X_MAXCEN_MASK, 0);
 
 	bq2589x_disable_watchdog_timer(bq);
