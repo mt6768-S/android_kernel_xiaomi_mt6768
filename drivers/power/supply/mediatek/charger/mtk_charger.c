@@ -2028,6 +2028,11 @@ static int mtk_charger_parse_dt(struct charger_manager *info,
 		mtk_dual_switch_charging_init(info);
 	}
 #endif
+	if (info->do_algorithm == NULL) {
+		chr_err("selene: '%s' not compiled, falling back to SwitchCharging\n",
+			info->algorithm_name);
+		mtk_switch_charging_init(info);
+	}
 
 	info->disable_charger = of_property_read_bool(np, "disable_charger");
 	info->enable_sw_safety_timer =
