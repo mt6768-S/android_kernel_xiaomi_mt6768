@@ -535,6 +535,7 @@ static int p2pDoIOCTL(struct net_device *prDev,
 /*----------------------------------------------------------------------------*/
 static int p2p_napi_poll(struct napi_struct *napi, int budget)
 {
+	napi_complete_done(napi, 0);
 	return 0;
 }
 #endif
@@ -564,7 +565,8 @@ static int p2pInit(struct net_device *prDev)
 	spin_lock_init(&prNetDevPrivate->napi_spinlock);
 	prNetDevPrivate->napi.dev = prDev;
 	netif_napi_add(prNetDevPrivate->napi.dev,
-		&prNetDevPrivate->napi, p2p_napi_poll, 64);
+		&prNetDevPrivate->napi, p2p_napi_poll,
+		CFG_NAPI_POLL_WEIGHT);
 	DBGLOG(INIT, TRACE,
 		"GRO interface added successfully:%p\n", prDev);
 #endif
@@ -582,6 +584,12 @@ static int p2pInit(struct net_device *prDev)
 /*----------------------------------------------------------------------------*/
 static void p2pUninit(IN struct net_device *prDev)
 {
+#if CFG_SUPPORT_RX_GRO
+	struct NETDEV_PRIVATE_GLUE_INFO *prNetDevPrivate;
+
+	prNetDevPrivate = netdev_priv(prDev);
+	netif_napi_del(&prNetDevPrivate->napi);
+#endif
 }				/* end of p2pUninit() */
 
 const struct net_device_ops p2p_netdev_ops = {
@@ -1728,6 +1736,10 @@ static int p2pOpen(IN struct net_device *prDev)
 /* P_MSG_P2P_FUNCTION_SWITCH_T prFuncSwitch; */
 
 	ASSERT(prDev);
+#if CFG_SUPPORT_RX_GRO
+	napi_enable(&((struct NETDEV_PRIVATE_GLUE_INFO *)
+		netdev_priv(prDev))->napi);
+#endif
 
 #if 0 /* Move after device name set. (mtk_p2p_set_local_dev_info) */
 	prGlueInfo = *((struct GLUE_INFO **) netdev_priv(prDev));
@@ -1856,6 +1868,10 @@ static int p2pStop(IN struct net_device *prDev)
 	/*prGlueInfo->prP2PInfo[0]->eState = MEDIA_STATE_DISCONNECTED;*/
 
 	netif_tx_stop_all_queues(prDev);
+#if CFG_SUPPORT_RX_GRO
+	napi_disable(&((struct NETDEV_PRIVATE_GLUE_INFO *)
+		netdev_priv(prDev))->napi);
+#endif
 	if (netif_carrier_ok(prDev))
 		netif_carrier_off(prDev);
 
@@ -2320,4 +2336,3 @@ skip_role:
 
 	return WLAN_STATUS_SUCCESS;
 }
-

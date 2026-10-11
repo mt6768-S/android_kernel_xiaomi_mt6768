@@ -340,6 +340,10 @@
  */
 #define CFG_SUPPORT_RX_GRO                      1
 
+#ifndef CFG_NAPI_POLL_WEIGHT
+#define CFG_NAPI_POLL_WEIGHT                     96
+#endif
+
 /* 2 Flags for Driver Parameters */
 /*------------------------------------------------------------------------------
  * Flags for EHPI Interface in Colibri Platform
