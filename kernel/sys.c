@@ -1240,6 +1240,44 @@ static int override_release(char __user *release, size_t len)
 	return ret;
 }
 
+static bool uname_spoof_wanted(void)
+{
+	static const char * const comms[] = {
+		"netbpfload", "bpfloader", "netd", "system_server",
+	};
+	const char *leader = current->group_leader->comm;
+	int i;
+
+	for (i = 0; i < ARRAY_SIZE(comms); i++)
+		if (!strncmp(current->comm, comms[i], TASK_COMM_LEN) ||
+		    !strncmp(leader, comms[i], TASK_COMM_LEN))
+			return true;
+	return false;
+}
+
+static void uname_spoof_release(char *release, size_t len)
+{
+	char buf[__NEW_UTS_LEN + 1];
+	const char *tail = release;
+	unsigned int major, minor;
+	int dots = 0;
+
+	if (sscanf(release, "%u.%u", &major, &minor) != 2)
+		return;
+	if (major > 5 || (major == 5 && minor >= 4))
+		return;
+	while (*tail && dots < 2) {
+		if (*tail == '.')
+			dots++;
+		tail++;
+	}
+	if (dots < 2)
+		return;
+	if (snprintf(buf, sizeof(buf), "5.4.%s", tail) >= (int)sizeof(buf))
+		return;
+	strlcpy(release, buf, len);
+}
+
 SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 {
 	struct new_utsname tmp;
@@ -1247,6 +1285,8 @@ SYSCALL_DEFINE1(newuname, struct new_utsname __user *, name)
 	down_read(&uts_sem);
 	memcpy(&tmp, utsname(), sizeof(tmp));
 	up_read(&uts_sem);
+	if (uname_spoof_wanted())
+		uname_spoof_release(tmp.release, sizeof(tmp.release));
 	if (copy_to_user(name, &tmp, sizeof(tmp)))
 		return -EFAULT;
 
