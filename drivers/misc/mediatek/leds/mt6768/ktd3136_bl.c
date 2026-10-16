@@ -22,7 +22,8 @@
 #include <linux/platform_device.h>
 
 struct ktd3137_chip *bkl_chip;
-int ktd_hbm_mode;
+/* selene: start at the highest HBM level (27.4 mA full-scale) */
+int ktd_hbm_mode = HBM_MODE_LEVEL2;
 
 //#define KTD_DEBUG
 
@@ -1070,7 +1071,7 @@ static int ktd3137_probe(struct i2c_client *client,
 	chip->pdata = pdata;
 	chip->dev = &client->dev;
 
-	ktd_hbm_mode = 0;
+	ktd_hbm_mode = HBM_MODE_LEVEL2;
 
 	ktd3137_dev = ktd3137_device_create(chip, "ktd");
 	if (IS_ERR(ktd3137_dev)) {
