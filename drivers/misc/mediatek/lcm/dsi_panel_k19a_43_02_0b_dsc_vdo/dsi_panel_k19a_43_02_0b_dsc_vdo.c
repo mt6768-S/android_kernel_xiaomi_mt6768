@@ -462,24 +462,25 @@ static void lcm_dfps_int(struct LCM_DSI_PARAMS *dsi)
 	/* traversing array must less than DFPS_LEVELS */
 	/* DPFS_LEVEL0 */
 	dfps_params[0].level = DFPS_LEVEL0;
-	dfps_params[0].fps = 4500;/*real fps * 100, to support float*/
+	dfps_params[0].fps = 6000;/*real fps * 100, to support float*/
 	dfps_params[0].vact_timing_fps = 9000;/*real vact timing fps * 100*/
-	dfps_params[0].vertical_frontporch = 2512;
-	dfps_params[0].vertical_frontporch_for_low_power = 2512;
+	/* if mipi clock solution */
+	/* dfps_params[0].PLL_CLOCK = 574; */
+	/* dfps_params[0].data_rate = xx; */
+	dfps_params[0].vertical_frontporch = 1290;
+	/* Huaqin modify for HQ-124150 by caogaojie at 2021/06/07 start */
+	dfps_params[0].vertical_frontporch_for_low_power = 2524;
 
+	/* DPFS_LEVEL1 */
 	dfps_params[1].level = DFPS_LEVEL1;
-	dfps_params[1].fps = 6000;/*real fps * 100, to support float*/
+	dfps_params[1].fps = 9000;/*real fps * 100, to support float*/
 	dfps_params[1].vact_timing_fps = 9000;/*real vact timing fps * 100*/
-	dfps_params[1].vertical_frontporch = 1290;
+	/* if mipi clock solution */
+	/* dfps_params[1].PLL_CLOCK = 380; */
+	/* dfps_params[1].data_rate = xx; */
+	dfps_params[1].vertical_frontporch = 46;
 	dfps_params[1].vertical_frontporch_for_low_power = 2524;
-
-	dfps_params[2].level = DFPS_LEVEL2;
-	dfps_params[2].fps = 9000;/*real fps * 100, to support float*/
-	dfps_params[2].vact_timing_fps = 9000;/*real vact timing fps * 100*/
-	dfps_params[2].vertical_frontporch = 46;
-	dfps_params[2].vertical_frontporch_for_low_power = 2524;
-
-	dsi->dfps_num = 3;
+	dsi->dfps_num = 2;
 }
 #endif
 
