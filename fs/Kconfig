@@ -4,6 +4,13 @@
 
 menu "File systems"
 
+config ANDROID_FS_TRACE
+	bool "Android filesystem tracepoints"
+	default n
+	depends on TRACEPOINTS
+	help
+	  Enable Android filesystem read, write, and fsync tracepoints.
+
 # Use unaligned word dcache accesses
 config DCACHE_WORD_ACCESS
        bool
