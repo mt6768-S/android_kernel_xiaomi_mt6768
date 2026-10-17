@@ -2148,6 +2148,7 @@ void wlanDebugInit(void)
 /*----------------------------------------------------------------------------*/
 static int kal_napi_poll(struct napi_struct *napi, int budget)
 {
+	napi_complete_done(napi, 0);
 	return 0;
 }
 #endif
@@ -2194,7 +2195,7 @@ static int wlanInit(struct net_device *prDev)
 	spin_lock_init(&prNetDevPrivate->napi_spinlock);
 	prNetDevPrivate->napi.dev = prDev;
 	netif_napi_add(prNetDevPrivate->napi.dev,
-		&prNetDevPrivate->napi, kal_napi_poll, 64);
+		&prNetDevPrivate->napi, kal_napi_poll, CFG_NAPI_POLL_WEIGHT);
 	DBGLOG(INIT, INFO,
 		"GRO interface added successfully:%p\n", prDev);
 #endif
@@ -2212,6 +2213,12 @@ static int wlanInit(struct net_device *prDev)
 /*----------------------------------------------------------------------------*/
 static void wlanUninit(struct net_device *prDev)
 {
+#if CFG_SUPPORT_RX_GRO
+	struct NETDEV_PRIVATE_GLUE_INFO *prNetDevPrivate;
+
+	prNetDevPrivate = netdev_priv(prDev);
+	netif_napi_del(&prNetDevPrivate->napi);
+#endif
 }				/* end of wlanUninit() */
 
 /*----------------------------------------------------------------------------*/
@@ -2298,6 +2305,10 @@ static int wlanOpen(struct net_device *prDev)
 #endif /* fos_change begin */
 
 	netif_tx_start_all_queues(prDev);
+#if CFG_SUPPORT_RX_GRO
+	napi_enable(&((struct NETDEV_PRIVATE_GLUE_INFO *)
+		netdev_priv(prDev))->napi);
+#endif
 /* fos_change begin */
 #if CFG_SUPPORT_WAKEUP_STATISTICS
 	if (prGlueInfo->prAdapter) {
@@ -2370,6 +2381,10 @@ static int wlanStop(struct net_device *prDev)
 	}
 
 	netif_tx_stop_all_queues(prDev);
+#if CFG_SUPPORT_RX_GRO
+	napi_disable(&((struct NETDEV_PRIVATE_GLUE_INFO *)
+		netdev_priv(prDev))->napi);
+#endif
 
 	return 0;		/* success */
 }				/* end of wlanStop() */
