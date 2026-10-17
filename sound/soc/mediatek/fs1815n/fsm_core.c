@@ -1268,7 +1268,7 @@ int fsm_stub_start_up(fsm_dev_t *fsm_dev)
 	}
 	pr_addr(err, "none ops");
 
-	return ret;
+	return -ENODEV;
 }
 
 int fsm_stub_shut_down(fsm_dev_t *fsm_dev)
@@ -1498,15 +1498,16 @@ static int fsm_try_init(void)
 		pr_err("invalid firmware, ret:%d", ret);
 		return -EINVAL;
 	}
+	ret = 0;
 	next_scene = cfg->next_scene;
 	cfg->next_scene = FSM_SCENE_MUSIC; // init all devices
 	list_for_each_entry(fsm_dev, &fsm_dev_list, list) {
-		fsm_stub_dev_init(fsm_dev);
+		ret |= fsm_stub_dev_init(fsm_dev);
 	}
 	cfg->next_scene = next_scene; // recovery scene
 	cfg->force_scene = cfg->force_init = false;
 
-	return 0;
+	return ret;
 }
 
 void fsm_init(void)
@@ -1516,6 +1517,7 @@ void fsm_init(void)
 	ret = fsm_hal_open();
 	if (ret) {
 		pr_err("hal open fail:%d", ret);
+		g_dev_inited = 0;
 		return;
 	}
 	fsm_mutex_lock();
@@ -1526,7 +1528,7 @@ void fsm_init(void)
 	if (ret) { // no device or firmware
 		pr_err("init failed: %d", ret);
 	}
-	g_dev_inited = 1;
+	g_dev_inited = (ret == 0);
 	pr_debug("done");
 	fsm_mutex_unlock();
 }
@@ -1615,14 +1617,15 @@ void fsm_speaker_onn(int mode)
 	int ret;
 
 /*K19A code for HQ-128766 by zhangpeng at 2021.4.3 start*/
+	fsm_mutex_lock();
 	if (cfg->speaker_on) {
 		pr_info("no need to spk on twice");
+		fsm_mutex_unlock();
 		return;
 	}
 	cfg->next_scene = mode;
 /*K19A code for HQ-128766 by zhangpeng at 2021.4.3 end*/
 	pr_info("scene: %04X", cfg->next_scene);
-	fsm_mutex_lock();
 	cfg->stream_muted = false;
 	ret = fsm_try_init();
 	if (ret) { // no device or firmware
@@ -1630,8 +1633,14 @@ void fsm_speaker_onn(int mode)
 		fsm_mutex_unlock();
 		return;
 	}
-	fsm_list_func(fsm_dev, fsm_stub_switch_preset);
-	fsm_list_func(fsm_dev, fsm_stub_start_up);
+	fsm_list_return(fsm_dev, fsm_stub_switch_preset, ret);
+	fsm_list_return(fsm_dev, fsm_stub_start_up, ret);
+	if (ret) {
+		pr_err("speaker startup failed: %d", ret);
+		cfg->stream_muted = true;
+		fsm_mutex_unlock();
+		return;
+	}
 	cfg->cur_angle = cfg->next_angle;
 	cfg->speaker_on = true;
 	pr_debug("done");
@@ -1645,12 +1654,13 @@ void fsm_speaker_off(void)
 	fsm_dev_t *fsm_dev = NULL;
 	int ret;
 
+	fsm_mutex_lock();
 	pr_info("scene: %04X", cfg->next_scene);
 	if (!cfg->speaker_on) {
 		pr_info("no need to spk off twice");
+		fsm_mutex_unlock();
 		return;
 	}
-	fsm_mutex_lock();
 	cfg->stream_muted = true;
 	ret = fsm_try_init();
 	if (ret) {
