@@ -1258,8 +1258,6 @@ int fsm_stub_dev_init(fsm_dev_t *fsm_dev)
 
 int fsm_stub_start_up(fsm_dev_t *fsm_dev)
 {
-	int ret = 0;
-
 	if (fsm_dev == NULL) {
 		return -EINVAL;
 	}
