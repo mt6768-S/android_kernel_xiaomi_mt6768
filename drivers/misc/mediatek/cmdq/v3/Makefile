@@ -59,8 +59,8 @@ else
 ccflags-y += -DCMDQ_COMMON_ENG_SUPPORT
 endif
 
-ccflags-y += -DCMDQ_TEST_PROC
 ifeq ($(CONFIG_MTK_ENG_BUILD),y)
+ccflags-y += -DCMDQ_TEST_PROC
 ccflags-y += -DCMDQ_PROFILE_LOCK
 ccflags-y += -DCMDQ_DEBUG_LOOP_IRQ
 endif
@@ -116,7 +116,7 @@ obj-y += cmdq_virtual.o
 obj-y += cmdq_device.o
 obj-y += cmdq_driver.o
 obj-y += cmdq_mdp_common.o
-obj-y += cmdq_test.o
+obj-$(CONFIG_MTK_ENG_BUILD) += cmdq_test.o
 #obj-y += cmdq_prof.o
 obj-y += cmdq_event_common.o
 obj-y += cmdq_subsys_common.o

@@ -116,7 +116,7 @@ static struct disp_idlemgr_context *_get_idlemgr_context(void)
 		DISP_INVALID_SESSION_MODE;
 	g_idlemgr_context.is_primary_idle = 0;
 	g_idlemgr_context.enterulps = 0;
-	g_idlemgr_context.idlemgr_last_kick_time = ~(0ULL);
+	g_idlemgr_context.idlemgr_last_kick_time = 0;
 	g_idlemgr_context.cur_lp_cust_mode = 0;
 	g_idlemgr_context.primary_display_idlemgr_task
 		= kthread_create(_primary_path_idlemgr_monitor_thread, NULL,
@@ -125,7 +125,7 @@ static struct disp_idlemgr_context *_get_idlemgr_context(void)
 (CONFIG_MTK_DUAL_DISPLAY_SUPPORT == 2)
 	init_waitqueue_head(&(g_idlemgr_context.ext_idlemgr_wait_queue));
 	g_idlemgr_context.is_external_idle = 0;
-	g_idlemgr_context.ext_idlemgr_last_kick_time = ~(0ULL);
+	g_idlemgr_context.ext_idlemgr_last_kick_time = 0;
 	g_idlemgr_context.external_display_idlemgr_task
 		= kthread_create(_external_path_idlemgr_monitor_thread, NULL,
 		"ext_disp_idlemgr");
@@ -1179,9 +1179,15 @@ static int _primary_path_idlemgr_monitor_thread(void *data)
 		ret = wait_event_interruptible(idlemgr_pgc->idlemgr_wait_queue,
 			atomic_read(&idlemgr_task_wakeup));
 
-		time_diff = local_clock() - idlemgr_pgc->idlemgr_last_kick_time;
-		interval = idle_check_interval * 1000 * 1000 - time_diff;
-		do_div(interval, 1000000);
+		time_diff = sched_clock() -
+			idlemgr_pgc->idlemgr_last_kick_time;
+		if (time_diff >= idle_check_interval * 1000 * 1000)
+			interval = 0;
+		else {
+			interval = idle_check_interval * 1000 * 1000 -
+				time_diff;
+			do_div(interval, 1000000);
+		}
 
 		mmprofile_log_ex(ddp_mmp_get_events()->idle_monitor,
 			MMPROFILE_FLAG_PULSE, idle_check_interval, interval);
@@ -1215,7 +1221,7 @@ static int _primary_path_idlemgr_monitor_thread(void *data)
 			continue;
 		}
 #endif
-		time_diff = local_clock() - idlemgr_pgc->idlemgr_last_kick_time;
+		time_diff = sched_clock() - idlemgr_pgc->idlemgr_last_kick_time;
 		if (time_diff < idle_check_interval * 1000 * 1000) {
 			/* kicked in 100ms, it's not idle */
 			primary_display_manual_unlock();
@@ -1346,7 +1352,6 @@ void primary_display_sodi_rule_init(void)
 	/* enable sodi when display driver is ready */
 #ifndef CONFIG_FPGA_EARLY_PORTING
 	ddp_set_spm_mode(DDP_CG_MODE, NULL);
-	mtk_idle_disp_is_ready(true);
 #endif
 #endif
 }
@@ -1429,7 +1434,7 @@ void leave_share_sram(enum CMDQ_EVENT_ENUM resourceEvent)
 {
 	/* 1. unregister call back */
 	cmdq_mdp_set_resource_callback(CMDQ_SYNC_RESOURCE_WROT0, NULL, NULL);
-	register_share_sram = 1;
+	register_share_sram = 0;
 	/* 2. try to release share sram */
 	_release_wrot_resource_nolock(CMDQ_SYNC_RESOURCE_WROT0);
 }
@@ -1721,7 +1726,7 @@ static int _external_path_idlemgr_monitor_thread(void *data)
 			continue;
 		}
 
-		diff = local_clock() - idlemgr_pgc->ext_idlemgr_last_kick_time;
+		diff = sched_clock() - idlemgr_pgc->ext_idlemgr_last_kick_time;
 		if ((diff  / 1000) < 100 * 1000) {
 			/* kicked in 100ms, it's not idle */
 			ext_disp_manual_unlock();
