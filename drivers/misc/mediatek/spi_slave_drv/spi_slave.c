@@ -481,8 +481,8 @@ static int spi_slave_probe(struct spi_device *spi)
 
 static int spi_slave_remove(struct spi_device *spi)
 {
-	if (spi && spi->controller_data)
-		kfree(spi->controller_data);
+	if (spi)
+		spi->controller_data = NULL;
 	return 0;
 }
 
