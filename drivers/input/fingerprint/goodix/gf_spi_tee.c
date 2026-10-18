@@ -447,7 +447,7 @@ static void gf_disable_irq(struct gf_device *gf_dev)
 	if (0 == gf_dev->irq_count) {
 		gf_debug(ERR_LOG, "%s, irq already disabled\n", __func__);
 	} else {
-		if (gf_dev->irq_wake_enabled && !disable_irq_wake(gf_dev->irq);)
+		if (gf_dev->irq_wake_enabled && !disable_irq_wake(gf_dev->irq))
 			gf_dev->irq_wake_enabled = 0;
 		disable_irq(gf_dev->irq);
 		gf_dev->irq_count = 0;
