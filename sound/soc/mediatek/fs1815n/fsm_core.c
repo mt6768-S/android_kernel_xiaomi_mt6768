@@ -1250,7 +1250,7 @@ int fsm_stub_dev_init(fsm_dev_t *fsm_dev)
 		ret |= fsm_dev->dev_ops.reg_init(fsm_dev);
 	}
 	ret |= fsm_get_rstrim(fsm_dev);
-	ret |= fsm_stub_shut_down(fsm_dev);
+	//ret |= fsm_stub_shut_down(fsm_dev);
 	fsm_dev->errcode = ret;
 
 	return ret;
