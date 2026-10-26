@@ -245,6 +245,11 @@ bool is_ksu_domain(void)
     return is_task_ksu_domain(current_cred());
 }
 
+bool susfs_is_current_ksu_domain(void)
+{
+    return is_ksu_domain();
+}
+
 bool is_zygote(const struct cred *cred)
 {
     return is_sid_match(cred, cached_zygote_sid, ZYGOTE_CONTEXT);
