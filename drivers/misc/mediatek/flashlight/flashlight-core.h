@@ -153,8 +153,6 @@ int flashlight_pt_is_low(void);
 void flashlight_kicker_pbm(bool status);
 #endif
 
-int flashlight_get_max_duty(void);
-int flashlight_set_cooler_level(int level);
 
 #endif /* _FLASHLIGHT_CORE_H */
 
