@@ -234,9 +234,6 @@ void reverse_charger(bool en)
  */
 int reverse_flage;
 uint8_t typec_cc_orientation;
-void reverse_charger(bool en)
-{
-}
 
 static int mt_charger_online(struct mt_charger *mtk_chg)
 {

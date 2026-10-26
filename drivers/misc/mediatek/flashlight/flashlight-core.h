@@ -104,8 +104,6 @@ struct flashlight_dev {
 	int low_pt_level;
 	int charger_status;
 	int sw_disable_status;
-	int need_cooler;
-	int cooler_level;
 };
 
 /* device arguments */
