@@ -56,6 +56,7 @@
 
 #include <mt-plat/mtk_boot.h>
 #include <mt-plat/v1/mtk_charger.h>
+#include <mt-plat/v1/mtk_battery.h>
 /* #include <musb_core.h> */ /* FIXME */
 #include "mtk_charger_intf.h"
 #include "mtk_switch_charging.h"
@@ -293,6 +294,22 @@ static void swchg_select_charging_current_limit(struct charger_manager *info)
 		} else if (hvdcp_type_tmp == HVDCP_3) {
 			pdata->input_current_limit = 3000000;
 			pdata->charging_current_limit = 3000000;
+		}
+		/* selene: an HVDCP adapter raised VBUS above 7V */
+		if (battery_get_vbus() > 7000) {
+			/*
+			 * HVDCP (QC, ~12V on this bq25890) with hard caps that do not
+			 * depend on the battery temperature: the NTC reads 15-20 C low
+			 * with the default RBAT_TYPE=10 / 24k pull-up, so JEITA and any
+			 * temperature step cannot see the real heat yet. 1A in at 12V,
+			 * 1.5A into the cell, 1A from 4.3V. Raise once the NTC is fixed.
+			 */
+			pdata->input_current_limit = 1000000;
+			pdata->charging_current_limit = 1500000;
+			if (battery_get_bat_voltage() >= 4300)
+				pdata->charging_current_limit = 1000000;
+			if (info->battery_temp >= 35)
+				pdata->charging_current_limit = 1000000;
 		}
 	} else if (info->chr_type == CHARGING_HOST) {
 		pdata->input_current_limit =
