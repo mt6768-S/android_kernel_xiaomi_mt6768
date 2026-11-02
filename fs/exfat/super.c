@@ -458,6 +458,7 @@ static const match_table_t exfat_tokens = {
 	{Opt_err_panic, "errors=panic"},
 	{Opt_err_ro, "errors=remount-ro"},
 	{Opt_discard, "discard"},
+	{Opt_time_offset, "time_offset=%d"},
 	{Opt_codepage, "codepage=%u"},
 	{Opt_namecase, "namecase=%u"},
 	{Opt_debug, "debug"},
