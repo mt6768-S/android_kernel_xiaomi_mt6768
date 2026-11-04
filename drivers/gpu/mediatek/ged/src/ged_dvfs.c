@@ -69,7 +69,8 @@ enum MTK_GPU_DVFS_TYPE g_CommitType;
 unsigned long g_ulCommitFreq;
 
 #ifdef ENABLE_COMMON_DVFS
-static unsigned int boost_gpu_enable;
+/* Raise the GPU promptly on touch; GED drops back to normal DVFS afterwards. */
+static unsigned int boost_gpu_enable = 1;
 static unsigned int gpu_bottom_freq;
 static unsigned int gpu_cust_boost_freq;
 static unsigned int gpu_cust_upbound_freq;

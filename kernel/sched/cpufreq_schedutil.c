@@ -11,6 +11,14 @@
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
+/*
+ * MT6768 is a slow-switching mobile platform.  A short ramp-up delay keeps
+ * touch and animation work from waiting on PELT for multiple frames, while a
+ * longer ramp-down delay avoids frequency oscillation during a gesture.
+ */
+#define SUGOV_MTK_UP_RATE_LIMIT_US	1000
+#define SUGOV_MTK_DOWN_RATE_LIMIT_US	20000
+
 #include "sched.h"
 
 #include <linux/sched/cpufreq.h>
@@ -932,8 +940,8 @@ static int sugov_init(struct cpufreq_policy *policy)
 		goto stop_kthread;
 	}
 
-	tunables->up_rate_limit_us = cpufreq_policy_transition_delay_us(policy);
-	tunables->down_rate_limit_us = cpufreq_policy_transition_delay_us(policy);
+	tunables->up_rate_limit_us = SUGOV_MTK_UP_RATE_LIMIT_US;
+	tunables->down_rate_limit_us = SUGOV_MTK_DOWN_RATE_LIMIT_US;
 
 	policy->governor_data = sg_policy;
 	sg_policy->tunables = tunables;

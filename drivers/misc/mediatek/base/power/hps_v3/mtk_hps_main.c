@@ -95,8 +95,9 @@ struct hps_ctxt_struct hps_ctxt = {
 	/* struct cpumask little_cpumask; */
 	/* struct cpumask big_cpumask; */
 	.little_cpu_id_min = 0,
-	.little_cpu_id_max = 3,
-	.big_cpu_id_min = 4,
+	/* Helio G85: CPUs 0-5 are Cortex-A55, CPUs 6-7 are Cortex-A75. */
+	.little_cpu_id_max = 5,
+	.big_cpu_id_min = 6,
 	.big_cpu_id_max = 7,
 
 	/* algo config */
