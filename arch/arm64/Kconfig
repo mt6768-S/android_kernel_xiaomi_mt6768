@@ -1705,6 +1705,11 @@ config TARGET_PRODUCT_MERLIN
         bool "Target product is merlin"
         default n
 
+config TARGET_PRODUCT_SELENECOMMON
+	bool "TARGET PRODUCT SELENECOMMON"
+	---help---
+	  Enable support for TARGET PRODUCT SELENECOMMON
+
 config TARGET_PRODUCT_SELENE
 	bool "target product is selene"
 	default n

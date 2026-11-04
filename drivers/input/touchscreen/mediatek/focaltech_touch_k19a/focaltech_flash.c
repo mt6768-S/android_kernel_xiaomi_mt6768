@@ -1023,6 +1023,10 @@ static void fts_fwres_work(struct work_struct *work)
 void fts_fwresume_work(void)
 {
 	FTS_INFO("call.");
+	/* the LCM driver calls this on every resume, even when the FTS
+	 * driver did not probe (other panel / touch IC) */
+	if (!fts_data || !fts_data->ts_workqueue)
+		return;
 	queue_work(fts_data->ts_workqueue, &fts_data->fwres_work);
 }
 
