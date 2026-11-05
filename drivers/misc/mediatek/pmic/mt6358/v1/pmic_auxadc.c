@@ -210,7 +210,7 @@ int wk_vbat_cali(int vbat_out, int precision_factor)
 		aee_kernel_warning("PMIC AUXADC CALI", "VBAT CALI");
 #endif
 	} else
-		pr_info("vbat_out_old=%d, vthr=%d, T_curr=%d, vbat_out=%d\n",
+		pr_debug("vbat_out_old=%d, vthr=%d, T_curr=%d, vbat_out=%d\n",
 			vbat_out_old, vthr, T_curr, vbat_out);
 
 	if (precision_factor > 1)
@@ -637,7 +637,7 @@ int pmic_get_auxadc_value(int list)
 #endif
 		if (is_charging == 0)
 			bat_cur = 0 - bat_cur;
-		pr_notice("[CH3_DBG] bat_cur = %d\n", bat_cur);
+		pr_debug("[CH3_DBG] bat_cur = %d\n", bat_cur);
 	}
 	if (list == AUXADC_LIST_HPOFS_CAL) {
 		ret = iio_read_channel_raw(
