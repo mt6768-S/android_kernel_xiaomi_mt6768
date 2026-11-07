@@ -2820,9 +2820,13 @@ int _trigger_display_interface(int blocking, void *callback,
 	unsigned int userdata)
 {
 	int ret;
+	int use_cmdq = primary_display_cmdq_enabled();
+	int video_mode = primary_display_is_video_mode();
+	int path_idle;
+	int arr_phase_1 = disp_helper_get_option(DISP_OPT_ARR_PHASE_1);
 
 	DISPFUNC();
-	if (_should_wait_path_idle()) {
+	if (!use_cmdq && dpmgr_path_is_busy(pgc->dpmgr_handle)) {
 		DISPCHECK("wait frame_done at trigger_display_interface\n");
 		ret = dpmgr_wait_event_timeout(pgc->dpmgr_handle,
 			DISP_PATH_EVENT_FRAME_DONE, HZ * 1);
@@ -2830,7 +2834,7 @@ int _trigger_display_interface(int blocking, void *callback,
 			primary_display_diagnose();
 	}
 
-	if (_should_update_lcm()) {
+	if (!use_cmdq && !video_mode) {
 		int x = disp_helper_get_option(DISP_OPT_FAKE_LCM_X);
 		int y = disp_helper_get_option(DISP_OPT_FAKE_LCM_Y);
 		int width = disp_helper_get_option(DISP_OPT_FAKE_LCM_WIDTH);
@@ -2839,40 +2843,40 @@ int _trigger_display_interface(int blocking, void *callback,
 		disp_lcm_update(pgc->plcm, x, y, width, height, 0);
 	}
 
-	if (_should_start_path())
+	path_idle = !use_cmdq && dpmgr_path_is_idle(pgc->dpmgr_handle);
+	if (!use_cmdq && (!video_mode || path_idle))
 		dpmgr_path_start(pgc->dpmgr_handle,
-			primary_display_cmdq_enabled());
+			use_cmdq);
 
-	if (disp_helper_get_option(DISP_OPT_ARR_PHASE_1) &&
-	    primary_display_is_video_mode() && dynamic_fps_changed) {
+	if (arr_phase_1 && video_mode && dynamic_fps_changed) {
 		change_dsi_vfp(pgc->cmdq_handle_config, pgc->dynamic_fps);
 		dynamic_fps_changed = 0;
 	}
 
-	if (_should_trigger_path()) {
+	if (!use_cmdq && (!video_mode || path_idle)) {
 #ifndef CONFIG_FPGA_EARLY_PORTING /* fpga has no vsync */
 		if (islcmconnected)
 			dpmgr_wait_event(pgc->dpmgr_handle,
 				DISP_PATH_EVENT_IF_VSYNC);
 #endif
 		dpmgr_path_trigger(pgc->dpmgr_handle, NULL,
-			primary_display_cmdq_enabled());
+			use_cmdq);
 	}
 
-	if (_should_set_cmdq_dirty())
+	if (use_cmdq && !video_mode)
 		_cmdq_set_config_handle_dirty();
 
-	if (_should_flush_cmdq_config_handle())
+	if (use_cmdq)
 		_cmdq_flush_config_handle(blocking, callback, userdata);
 
-	if (_should_reset_cmdq_config_handle())
+	if (use_cmdq)
 		_cmdq_reset_config_handle();
 
 	/* clear cmdq dirty in case trigger loop starts here */
-	if (_should_set_cmdq_dirty())
+	if (use_cmdq && !video_mode)
 		_cmdq_handle_clear_dirty(pgc->cmdq_handle_config);
 
-	if (_should_insert_wait_frame_done_token())
+	if (use_cmdq)
 		_cmdq_insert_wait_frame_done_token_mira(
 			pgc->cmdq_handle_config);
 
@@ -3476,7 +3480,10 @@ static int decouple_mirror_update_rdma_config_thread(void *data)
 		decouple_mirror_irq_callback);
 	while (1) {
 		ret = wait_event_interruptible(decouple_update_rdma_wq,
-			atomic_read(&decouple_update_rdma_event));
+			atomic_read(&decouple_update_rdma_event) ||
+			kthread_should_stop());
+		if (kthread_should_stop())
+			break;
 		if (ret == 0) {
 			atomic_set(&decouple_update_rdma_event, 0);
 			decouple_update_rdma_config();
@@ -3595,7 +3602,10 @@ static int primary_display_frame_update_kthread(void *data)
 	sched_setscheduler(current, SCHED_RR, &param);
 	for (;;) {
 		wait_event_interruptible(primary_display_frame_update_wq,
-			atomic_read(&primary_display_frame_update_event));
+			atomic_read(&primary_display_frame_update_event) ||
+			kthread_should_stop());
+		if (kthread_should_stop())
+			break;
 		atomic_set(&primary_display_frame_update_event, 0);
 
 		if (pgc->session_id > 0)
@@ -3622,7 +3632,10 @@ static int _present_fence_release_worker_thread(void *data)
 		unsigned int pf_idx = 0;
 
 		wait_event_interruptible(primary_display_present_fence_wq,
-			atomic_read(&primary_display_pt_fence_update_event));
+			atomic_read(&primary_display_pt_fence_update_event) ||
+			kthread_should_stop());
+		if (kthread_should_stop())
+			break;
 		mmprofile_log_ex(ddp_mmp_get_events()->present_fence_release,
 			MMPROFILE_FLAG_PULSE, 0, 0);
 		atomic_set(&primary_display_pt_fence_update_event, 0);
@@ -5788,7 +5801,10 @@ static int decouple_trigger_worker_thread(void *data)
 
 	while (1) {
 		wait_event(decouple_trigger_wq,
-			atomic_read(&decouple_trigger_event));
+			atomic_read(&decouple_trigger_event) ||
+			kthread_should_stop());
+		if (kthread_should_stop())
+			break;
 		dpmgr_wait_event(pgc->dpmgr_handle, DISP_PATH_EVENT_IF_VSYNC);
 
 		_primary_path_lock(__func__);

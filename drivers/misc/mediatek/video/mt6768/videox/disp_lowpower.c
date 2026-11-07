@@ -1702,10 +1702,12 @@ static int _external_path_idlemgr_monitor_thread(void *data)
 
 	msleep(16000);
 	while (1) {
-		msleep_interruptible(100); /* 100ms */
 		ret = wait_event_interruptible(
 			idlemgr_pgc->ext_idlemgr_wait_queue,
-			atomic_read(&ext_idlemgr_task_wakeup));
+			atomic_read(&ext_idlemgr_task_wakeup) ||
+			kthread_should_stop());
+		if (kthread_should_stop())
+			break;
 
 		ext_disp_manual_lock();
 
@@ -1817,4 +1819,3 @@ void external_display_idlemgr_kick(const char *source, int need_lock)
 }
 
 #endif
-
