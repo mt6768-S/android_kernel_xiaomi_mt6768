@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2010 Trusted Logic S.A.
+ * Copyright (C) 2021 XiaoMi, Inc.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -83,7 +84,7 @@ MODULE_DEVICE_TABLE(of, msm_match_table);
 #define ESE_CLD_RST_RSP_SIZE 0x04
 #define WAKEUP_SRC_TIMEOUT		(2000)
 
-//extern int force_sig_info(int, struct siginfo *, struct task_struct *);
+extern int force_sig_info(int, struct siginfo *, struct task_struct *);
 
 /* VEN is kept ON all the time if you define the macro VEN_ALWAYS_ON.
 Used for SN100 usecases */
@@ -462,7 +463,7 @@ static int signal_handler(p61_access_state_t state, long nfc_pid)
 		task = pid_task(find_vpid(pid), PIDTYPE_PID);
 		if (task) {
 			pr_info("%s.\n", task->comm);
-			//sigret = force_sig_info(SIG_NFC, &sinfo, task);
+			sigret = force_sig_info(SIG_NFC, &sinfo, task);
 			if (sigret < 0) {
 				pr_info
 				    ("send_sig_info failed..... sigret %d.\n",
@@ -1346,14 +1347,14 @@ static void secure_timer_workqueue(struct work_struct *Wq)
 	return;
 }
 
-//static void secure_timer_callback(unsigned long data)
-//{
+static void secure_timer_callback(unsigned long data)
+{
 	/* Flush and push the timer callback event to the bottom half(work queue)
 	   to be executed later, at a safer time */
-//	flush_workqueue(g_pn544_dev->pSecureTimerCbWq);
-//	queue_work(g_pn544_dev->pSecureTimerCbWq, &g_pn544_dev->wq_task);
-//	return;
-//}
+	flush_workqueue(g_pn544_dev->pSecureTimerCbWq);
+	queue_work(g_pn544_dev->pSecureTimerCbWq, &g_pn544_dev->wq_task);
+	return;
+}
 
 static long start_seccure_timer(unsigned long timer_value)
 {
@@ -1367,8 +1368,8 @@ static long start_seccure_timer(unsigned long timer_value)
 	}
 	/* Start the timer if timer value is non-zero */
 	if (timer_value) {
-		//init_timer(&secure_timer);
-		//setup_timer(&secure_timer, secure_timer_callback, 0);
+		init_timer(&secure_timer);
+		setup_timer(&secure_timer, secure_timer_callback, 0);
 
 		pr_info("start_seccure_timer: timeout %lums (%lu)\n",
 			timer_value, jiffies);
