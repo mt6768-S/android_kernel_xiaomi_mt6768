@@ -2465,6 +2465,47 @@ int mtk_cfg80211_vendor_acs(struct wiphy *wiphy,
 		}
 	}
 
+	/*
+	 * hostapd leaves the frequency list out when the framework puts no
+	 * limit on the ACS range (empty freqlist). Offer every enabled
+	 * channel of the requested band(s) instead of rejecting the request,
+	 * which made every SoftAP start fail with -EINVAL.
+	 */
+	if (!ch_list_count) {
+		enum nl80211_band band;
+		struct ieee80211_supported_band *sband;
+		uint32_t n;
+
+		ch_list = kalMemAlloc(sizeof(uint32_t) * MAX_CHN_NUM,
+				VIR_MEM_TYPE);
+		if (ch_list == NULL) {
+			DBGLOG(REQ, ERROR, "allocate ch_list fail.\n");
+			rStatus = -ENOMEM;
+			goto exit;
+		}
+		for (band = NL80211_BAND_2GHZ; band <= NL80211_BAND_5GHZ;
+				band++) {
+			if (band == NL80211_BAND_2GHZ &&
+			    hw_mode == P2P_VENDOR_ACS_HW_MODE_11A)
+				continue;
+			if (band == NL80211_BAND_5GHZ &&
+			    (hw_mode == P2P_VENDOR_ACS_HW_MODE_11B ||
+			     hw_mode == P2P_VENDOR_ACS_HW_MODE_11G))
+				continue;
+			sband = wiphy->bands[band];
+			if (!sband)
+				continue;
+			for (n = 0; n < sband->n_channels &&
+					ch_list_count < MAX_CHN_NUM; n++) {
+				if (sband->channels[n].flags &
+						IEEE80211_CHAN_DISABLED)
+					continue;
+				ch_list[ch_list_count++] =
+					sband->channels[n].center_freq;
+			}
+		}
+	}
+
 	if (!ch_list_count) {
 		DBGLOG(REQ, ERROR, "channel list count can NOT be 0\n");
 		rStatus = -EINVAL;
