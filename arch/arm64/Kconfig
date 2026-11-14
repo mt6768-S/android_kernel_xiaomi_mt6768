@@ -1705,6 +1705,10 @@ config TARGET_PRODUCT_MERLIN
         bool "Target product is merlin"
         default n
 
+config TARGET_PRODUCT_FIRE
+	bool "Target product is fire (Redmi 12 4G)"
+	default n
+
 config TARGET_PRODUCT_LANCELOTCOMMON
 	bool "Target product is lancelot family (lancelot/galahad)"
 	default n
