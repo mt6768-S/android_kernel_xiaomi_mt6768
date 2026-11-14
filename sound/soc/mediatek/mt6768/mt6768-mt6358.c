@@ -17,6 +17,9 @@
 #include "mt6768-afe-gpio.h"
 #include "../../codecs/mt6358.h"
 #include "../common/mtk-sp-spk-amp.h"
+#ifdef CONFIG_SND_SOC_SIA8152S
+#include "../../codecs/sipa/sipa_aux_dev_if.h"
+#endif
 #ifdef CONFIG_SND_SOC_FS16XX
 #include "../fs1815n/fsm_public.h"
 #include "../fs1815n/fsm-dev.h"
@@ -1138,6 +1141,12 @@ static int mt6768_mt6358_dev_probe(struct platform_device *pdev)
 
 	card->dev = &pdev->dev;
 
+#ifdef CONFIG_SND_SOC_SIA8152S
+	ret = soc_aux_init_only_sia81xx(pdev, card);
+	if (ret)
+		dev_err(&pdev->dev, "%s soc_aux_init_only_sia81xx fail %d\n",
+			__func__, ret);
+#endif
 	ret = devm_snd_soc_register_card(&pdev->dev, card);
 	if (ret)
 		dev_err(&pdev->dev, "%s snd_soc_register_card fail %d\n",

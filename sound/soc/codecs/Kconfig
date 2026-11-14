@@ -1451,4 +1451,17 @@ config SND_SOC_SMARTPAINFO
 
 source "sound/soc/codecs/cs35l43/Kconfig"
 
+
+config SND_SOC_AW87XXX
+	tristate "SoC Audio for awinic AW87XXX Smart K PA (fire)"
+	depends on I2C
+	help
+	  This option enables support for AW87XXX Smart K PA.
+
+config SND_SOC_SIA8152S
+	tristate "SoC Audio for SIA8152S Smart K PA (fire)"
+	depends on I2C
+	help
+	  This option enables support for SIA8152S Smart K PA.
+
 endmenu
