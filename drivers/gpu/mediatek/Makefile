@@ -19,9 +19,7 @@ export MTK_PLATFORM
 ifneq ($(CONFIG_MTK_GPU_SUPPORT),)
 	obj-y += hal/
 	obj-y += gpufreq/
-ifneq ($(CONFIG_MACH_MT6768),y)
 	obj-y += ged/
-endif
 ifneq (, $(findstring $(CONFIG_MTK_PLATFORM), "mt6779" "mt6785"))
 	obj-y += gpu_bm/
 $(info *GPU defined GPU BM QoS 2.0-419)
