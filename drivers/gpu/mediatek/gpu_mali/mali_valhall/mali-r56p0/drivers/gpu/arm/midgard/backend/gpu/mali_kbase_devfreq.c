@@ -42,6 +42,7 @@ static int kbase_mtk_devfreq_add_opps(struct kbase_device *kbdev)
 {
 	unsigned int i;
 	unsigned int num_opps = mt_gpufreq_get_dvfs_table_num();
+	int err = 0;
 
 	if (!num_opps)
 		return -EPROBE_DEFER;
@@ -49,7 +50,6 @@ static int kbase_mtk_devfreq_add_opps(struct kbase_device *kbdev)
 	for (i = 0; i < num_opps; i++) {
 		unsigned long freq = (unsigned long)mt_gpufreq_get_freq_by_idx(i) * 1000;
 		unsigned long volt = (unsigned long)mt_gpufreq_get_volt_by_idx(i) * 10;
-		int err;
 
 		if (!freq || !volt) {
 			err = -EINVAL;
@@ -61,7 +61,9 @@ static int kbase_mtk_devfreq_add_opps(struct kbase_device *kbdev)
 			goto rollback;
 	}
 
-+rollback:
+	return 0;
+
+rollback:
 	while (i--)
 		dev_pm_opp_remove(kbdev->dev,
 			(unsigned long)mt_gpufreq_get_freq_by_idx(i) * 1000);
