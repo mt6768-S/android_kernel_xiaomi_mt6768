@@ -442,6 +442,21 @@ static int SYV690_psy_chg_type_changed(struct SYV690_device *chgInfo);
  * STANDARD_CHARGER whose usb psy type is HVDCP. Keep HVDCP as a value private
  * to this driver and hand STANDARD_CHARGER to the charger framework.
  */
+/*
+ * l24 builds neither mtk_intf.o (adapter_set_cap) nor fire's mtk_battery.c
+ * ship mode (get_shipmode_status). Weak fallbacks: no PD voltage request,
+ * never in ship mode. A real implementation elsewhere overrides them.
+ */
+int __weak adapter_set_cap(int mV, int mA)
+{
+	return -EOPNOTSUPP;
+}
+
+int __weak get_shipmode_status(void)
+{
+	return 0;
+}
+
 #ifndef HVDCP_CHARGER
 #define SYV690_HVDCP_PRIVATE
 #define HVDCP_CHARGER ((enum charger_type)(WIRELESS_CHARGER + 1))
