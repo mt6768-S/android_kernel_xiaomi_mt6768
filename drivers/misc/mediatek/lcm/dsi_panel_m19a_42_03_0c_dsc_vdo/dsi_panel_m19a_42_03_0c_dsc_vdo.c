@@ -69,8 +69,8 @@ static struct LCM_UTIL_FUNCS lcm_util;
 #define read_reg(cmd)	lcm_util.dsi_dcs_read_lcm_reg(cmd)
 #define read_reg_v2(cmd, buffer, buffer_size) \
 		lcm_util.dsi_dcs_read_lcm_reg_v2(cmd, buffer, buffer_size)
-#define dsi_set_cmdq_vmcmd(cmdq, cmd, count, para_list, force_update) \
-		lcm_util.dsi_send_vmcmd(cmdq, cmd, count, para_list, force_update)
+/* l24: no dsi_send_vmcmd, use the cmdq aware V22 path */ \
+		lcm_util.dsi_set_cmdq_V22(cmdq, cmd, count, para_list, force_update)
 
 #ifndef BUILD_LK
 #  include <linux/kernel.h>
@@ -587,7 +587,7 @@ static void lcm_setbacklight_vmcmd_cmdq(void *handle, unsigned int *lcm_cmd, uns
 }
 
 static int cabc_status = 0;
-static void lcm_set_cabc_vmcmd_cmdq(void *handle, unsigned int *lcm_cmd, unsigned int *lcm_count, unsigned int level)
+static void __maybe_unused lcm_set_cabc_vmcmd_cmdq(void *handle, unsigned int *lcm_cmd, unsigned int *lcm_count, unsigned int level)
 {
 	LCM_LOGD("%s,ft8720 set_cabc level = %d\n", __func__, level);
 
@@ -596,7 +596,7 @@ static void lcm_set_cabc_vmcmd_cmdq(void *handle, unsigned int *lcm_cmd, unsigne
 	cabc_status = level;
 }
 
-static void lcm_get_cabc_status(int *status)
+static void __maybe_unused lcm_get_cabc_status(int *status)
 {
 	*status = cabc_status;
 	LCM_LOGD("%s, ft8720 get_cabc level = %d\n", *status);
@@ -687,8 +687,6 @@ struct LCM_DRIVER dsi_panel_m19a_42_03_0c_dsc_vdo_lcm_drv = {
 	.resume_power = lcm_resume_power,
 	.suspend_power = lcm_suspend_power,
 	.set_lcm_cmd = lcm_setbacklight_vmcmd_cmdq,
-	.set_lcm_cabc_cmd = lcm_set_cabc_vmcmd_cmdq,
-	.get_cabc_status = lcm_get_cabc_status,
 	.ata_check = lcm_ata_check,
 	.update = lcm_update,
 	.esd_recover = lcd_esd_recover,
