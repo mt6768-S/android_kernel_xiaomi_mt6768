@@ -77,6 +77,32 @@ int tpd_notifier_call_chain(unsigned long val, void *v)
 EXPORT_SYMBOL_GPL(tpd_notifier_call_chain);
 
 
+/*
+ * Proximity enable chain. The fire touch drivers register here to know when
+ * the proximity sensor is on (pocket / in-call). Nothing in this tree defined
+ * it, so provide the chain; a sensor driver can fire it with
+ * ps_enable_notifier_call_chain().
+ */
+static BLOCKING_NOTIFIER_HEAD(ps_enable_notifier_list);
+
+int ps_enable_register_notifier(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_register(&ps_enable_notifier_list, nb);
+}
+EXPORT_SYMBOL_GPL(ps_enable_register_notifier);
+
+int ps_enable_unregister_notifier(struct notifier_block *nb)
+{
+	return blocking_notifier_chain_unregister(&ps_enable_notifier_list, nb);
+}
+EXPORT_SYMBOL_GPL(ps_enable_unregister_notifier);
+
+int ps_enable_notifier_call_chain(unsigned long val, void *v)
+{
+	return blocking_notifier_call_chain(&ps_enable_notifier_list, val, v);
+}
+EXPORT_SYMBOL_GPL(ps_enable_notifier_call_chain);
+
 struct notifier_block psenable_nb;
 int ps_state;
 

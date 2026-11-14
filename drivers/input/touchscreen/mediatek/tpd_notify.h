@@ -13,6 +13,7 @@ extern int tpd_notifier_call_chain(unsigned long val, void *v);
 extern int tpd_register_psenable_callback(void);
 extern int ps_enable_register_notifier(struct notifier_block *nb);
 extern int ps_enable_unregister_notifier(struct notifier_block *nb);
+extern int ps_enable_notifier_call_chain(unsigned long val, void *v);
 extern int tpd_charger_detect_register_client(struct notifier_block *nb);
 extern int tpd_charger_detect_unregister_client(struct notifier_block *nb);
 extern int tpd_charger_detect_notifier_call_chain(unsigned long val, void *v);
