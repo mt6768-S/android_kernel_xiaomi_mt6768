@@ -1,0 +1,9 @@
+#
+# Focaltech FT8720 (fire) touchscreen driver configuration
+#
+
+config TOUCHSCREEN_FTS_FT8720
+	bool "Focaltech FT8720 touchscreen (fire)"
+	default n
+	help
+	  Focaltech FT8720 SPI touch panel used by the Redmi 12 (fire).
