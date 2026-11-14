@@ -17,4 +17,7 @@
 
 obj-y += dsi_panel_m19a_42_03_0c_dsc_vdo.o
 
+ccflags-$(CONFIG_MTK_LCM) += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/
+ccflags-$(CONFIG_MTK_LCM) += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/$(MTK_PLATFORM)/include/
+
 ccflags-$(CONFIG_MTK_LCM) += -I$(srctree)/drivers/misc/mediatek/lcm/inc
