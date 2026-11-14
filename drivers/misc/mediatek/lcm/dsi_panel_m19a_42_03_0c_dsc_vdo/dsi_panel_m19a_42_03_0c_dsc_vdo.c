@@ -71,7 +71,7 @@ static struct LCM_UTIL_FUNCS lcm_util;
 		lcm_util.dsi_dcs_read_lcm_reg_v2(cmd, buffer, buffer_size)
 /* l24: no dsi_send_vmcmd, use the cmdq aware V22 path */
 #define dsi_set_cmdq_vmcmd(cmdq, cmd, count, para_list, force_update) \
-		lcm_util.dsi_set_cmdq_V22(cmdq, cmd, count, para_list, force_update)
+		dsi_set_cmdq_V22(cmdq, cmd, count, para_list, force_update)
 
 #ifndef BUILD_LK
 #  include <linux/kernel.h>
