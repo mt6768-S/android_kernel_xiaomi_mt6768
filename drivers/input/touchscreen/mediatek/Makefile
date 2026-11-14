@@ -21,6 +21,7 @@ obj-$(CONFIG_TOUCHSCREEN_HIMAX_I2C)	+=  hxchipset/
 obj-$(CONFIG_TOUCHSCREEN_MTK_FOCALTECH_FHD)	+=  focaltech_fhd_touch/
 
 obj-$(CONFIG_TOUCHSCREEN_COMMON)	+= tp_common.o
+obj-$(CONFIG_TARGET_PRODUCT_FIRE)	+= tpd_notify.o
 obj-$(CONFIG_TOUCHSCREEN_NT36xxx_SPI)	+=  NT36xxx_SPI/
 obj-$(CONFIG_TOUCHSCREEN_FTS)	+=  focaltech_touch/
 obj-$(CONFIG_TOUCHSCREEN_MTK_FT8719P)	+=  FT8719P/
