@@ -252,14 +252,6 @@ static unsigned int g_limited_idx_array[NUMBER_OF_LIMITED_IDX] = { 0 };
 static bool g_limited_ignore_array[NUMBER_OF_LIMITED_IDX] = { false };
 static void __iomem *g_apmixed_base;
 
-#ifdef MTK_GPU_LOG
-GED_LOG_BUF_HANDLE _mtk_gpu_log_hnd;
-#endif
-
-#include "ged_log.h"
-#include "ged_base.h"
-extern GED_LOG_BUF_HANDLE gpufreq_ged_log;
-
 static int g_clock_on;
 
 /**
@@ -1709,8 +1701,7 @@ static void __mt_gpufreq_set(unsigned int idx_old, unsigned int idx_new,
 			volt_old, volt_new,
 			vsram_volt_old, vsram_volt_new);
 
-	ged_log_buf_print2(gpufreq_ged_log, GED_LOG_ATTR_TIME,
-	"begin idx: %d ---> %d, freq: %d ---> %d, volt: %d ---> %d, vsram_volt: %d ---> %d\n",
+	gpufreq_pr_debug("begin idx: %d ---> %d, freq: %d ---> %d, volt: %d ---> %d, vsram_volt: %d ---> %d\n",
 		idx_old, idx_new,
 		freq_old, freq_new,
 		volt_old, volt_new,
@@ -1748,8 +1739,7 @@ static void __mt_gpufreq_set(unsigned int idx_old, unsigned int idx_new,
 			tmp_vsram_volt,
 			g_opp_table[sb_idx].gpufreq_vsram);
 
-			ged_log_buf_print2(gpufreq_ged_log, GED_LOG_ATTR_TIME,
-			"volt_switch idx: %d ---> %d, volt: %d ---> %d, vsram_volt: %d ---> %d\n",
+			gpufreq_pr_debug("volt_switch idx: %d ---> %d, volt: %d ---> %d, vsram_volt: %d ---> %d\n",
 				tmp_idx,
 				sb_idx,
 				tmp_volt,
@@ -1782,8 +1772,7 @@ static void __mt_gpufreq_set(unsigned int idx_old, unsigned int idx_new,
 			tmp_vsram_volt,
 			g_opp_table[sb_idx].gpufreq_vsram);
 
-			ged_log_buf_print2(gpufreq_ged_log, GED_LOG_ATTR_TIME,
-			"volt_switch idx: %d ---> %d, volt: %d ---> %d, vsram_volt: %d ---> %d\n",
+			gpufreq_pr_debug("volt_switch idx: %d ---> %d, volt: %d ---> %d, vsram_volt: %d ---> %d\n",
 				tmp_idx,
 				sb_idx,
 				tmp_volt,
@@ -1808,8 +1797,7 @@ static void __mt_gpufreq_set(unsigned int idx_old, unsigned int idx_new,
 			vsram_volt_old, vsram_volt_new,
 			__mt_gpufreq_get_cur_vsram_volt());
 
-	ged_log_buf_print2(gpufreq_ged_log, GED_LOG_ATTR_TIME,
-	"done idx: %d ---> %d, freq: %d ---> %d(%d) (GPUPLL_CON1 = 0x%x), volt: %d ---> %d(%d), vsram_volt: %d ---> %d(%d)\n\n",
+	gpufreq_pr_debug("done idx: %d ---> %d, freq: %d ---> %d(%d) (GPUPLL_CON1 = 0x%x), volt: %d ---> %d(%d), vsram_volt: %d ---> %d(%d)\n\n",
 		idx_old, idx_new,
 		freq_old, freq_new,
 		mt_get_ckgen_freq(5), DRV_Reg32(GPUPLL_CON1),

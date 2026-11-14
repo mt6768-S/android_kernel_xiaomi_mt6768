@@ -15,7 +15,6 @@
 #include "mali_kbase_cpu_mt6768.h"
 #include "mali_kbase_config_platform.h"
 #include "platform/mtk_platform_common.h"
-#include "ged_dvfs.h"
 #include "mtk_gpufreq.h"
 #include <mtk_gpu_log.h>
 #include "mtk_idle.h"
@@ -140,15 +139,11 @@ static int pm_callback_power_on_nolock(struct kbase_device *kbdev)
 
 	/* Resume frequency before power off */
 	mtk_common_pm_mfg_active();
-	mtk_common_gpufreq_commit(g_curFreqID);
+	mt_gpufreq_target(g_curFreqID, true);
 
 #ifdef MT_GPUFREQ_SRAM_DEBUG
 	aee_rr_rec_gpu_dvfs_status(0x7 | (aee_rr_curr_gpu_dvfs_status() & 0xF0));
 #endif
-
-#if IS_ENABLED(CONFIG_MALI_MIDGARD_DVFS) && IS_ENABLED(CONFIG_MTK_GPU_COMMON_DVFS)
-	ged_dvfs_gpu_clock_switch_notify(1);
-#endif /* ENABLE_COMMON_DVFS */
 
 	return 1;
 }
@@ -164,16 +159,12 @@ static void pm_callback_power_off_nolock(struct kbase_device *kbdev)
 	aee_rr_rec_gpu_dvfs_status(0x8 | (aee_rr_curr_gpu_dvfs_status() & 0xF0));
 #endif
 
-#if IS_ENABLED(CONFIG_MALI_MIDGARD_DVFS) && IS_ENABLED(CONFIG_MTK_GPU_COMMON_DVFS)
-	ged_dvfs_gpu_clock_switch_notify(0);
-#endif /* ENABLE_COMMON_DVFS */
-
 #ifdef MT_GPUFREQ_SRAM_DEBUG
 	aee_rr_rec_gpu_dvfs_status(0x9 | (aee_rr_curr_gpu_dvfs_status() & 0xF0));
 #endif
 
 	mtk_common_pm_mfg_idle();
-	g_curFreqID = mtk_common_ged_dvfs_get_last_commit_idx();
+	g_curFreqID = mt_gpufreq_get_cur_freq_index();
 
 #ifdef MT_GPUFREQ_SRAM_DEBUG
 	aee_rr_rec_gpu_dvfs_status(0xA | (aee_rr_curr_gpu_dvfs_status() & 0xF0));

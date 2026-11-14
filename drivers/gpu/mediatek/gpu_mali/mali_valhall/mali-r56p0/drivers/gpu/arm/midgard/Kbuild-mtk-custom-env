@@ -44,8 +44,15 @@ ccflags-y += -I$(srctree)/drivers/misc/mediatek/include/mt-plat
 ccflags-$(CONFIG_DEBUG_FS) += -DCONFIG_DEBUG_FS
 ccflags-y += -DCONFIG_PROC_FS
 
+ifeq ($(CONFIG_MACH_MT6768),y)
+# MT6768 uses the Arm devfreq governor, but keeps MTK GPUFreq as the sole
+# clock/voltage transition backend for PTPOD, PBM, thermal and VSRAM handling.
+CONFIG_MALI_DEVFREQ := y
+ccflags-y += -DCONFIG_MALI_DEVFREQ -UCONFIG_MALI_MIDGARD_DVFS
+else
 ccflags-y += -DCONFIG_MALI_MIDGARD_DVFS
 ccflags-$(CONFIG_MTK_GPU_COMMON_DVFS_SUPPORT) += -DCONFIG_MTK_GPU_COMMON_DVFS
+endif
 
 # Enable by specific Family-ID
 ifneq (, $(findstring $(CONFIG_MTK_PLATFORM), "mt6885" "mt6873" "mt6853"))
