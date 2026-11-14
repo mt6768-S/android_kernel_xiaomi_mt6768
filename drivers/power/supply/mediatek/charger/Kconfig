@@ -235,3 +235,9 @@ config CHARGER_BQ2589X_CHARGER
 	  It depends on config MTK_SMART_BATTERY
 	  and config MTK_SWCHR_SUPPORT
 	  Set to Yes if BQ2589X is used.
+
+config CHARGER_SYV690
+	bool "CHARGER_SYV690"
+	help
+	  Silergy SYV690 switching charger, used by the Redmi 12 (fire).
+	  Set to Yes if SYV690 is used.

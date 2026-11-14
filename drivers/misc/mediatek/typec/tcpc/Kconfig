@@ -82,6 +82,14 @@ config USB_POWER_DELIVERY
 	  Power Delivery
 	  support
 
+config TCPC_HUSB320
+	bool "HUSB320 TypeC port Controller Driver (fire)"
+	depends on TCPC_CLASS
+	default n
+	help
+	  Say Y to enable the Hynetek HUSB320 Type-C port controller
+	  used by the Redmi 12 (fire).
+
 config TCPC_WUSB3801
 	bool "MediaTek WUSB3801 TypeC port Controller Driver"
 	depends on TCPC_CLASS
