@@ -867,4 +867,33 @@ void KD_IMGSENSOR_PROFILE_I2C(char *tag, int trans_num);
 #define SENSOR_DRVNAME_GC02M1B_SUNNY_MIPI_RAW   "gc02m1b_sunny_mipi_raw"
 #define SENSOR_DRVNAME_OV02B1B_OFILM_MIPI_RAW   "ov02b1b_ofilm_mipi_raw"
 
+
+#ifdef CONFIG_TARGET_PRODUCT_FIRE
+/* fire (Redmi 12) sensors */
+#define SENSOR_DRVNAME_S5KJNS_SUNNY_MIPI_RAW          "s5kjns_sunny_mipi_raw"
+#define S5KJNS_SUNNY_SENSOR_ID                         0x38ef
+#define SENSOR_DRVNAME_OV50D40_TRULY_MIPI_RAW         "ov50d40_truly_mipi_raw"
+#define OV50D40_TRULY_SENSOR_ID                        0x565044
+#define SENSOR_DRVNAME_OV8856_SUNNY_MIPI_RAW          "ov8856_sunny_mipi_raw"
+#define OV8856_SUNNY_SENSOR_ID                         0x885a
+#define SENSOR_DRVNAME_OV8856_OFILM_MIPI_RAW          "ov8856_ofilm_mipi_raw"
+#define OV8856_OFILM_SENSOR_ID                         0x885a+1
+#define SENSOR_DRVNAME_IMX355_SUNNY_MIPI_RAW          "imx355_sunny_mipi_raw"
+#define IMX355_SUNNY_SENSOR_ID                         0x356
+#define SENSOR_DRVNAME_SC820CS_TRULY_MIPI_RAW         "sc820cs_truly_mipi_raw"
+#define SC820CS_TRULY_SENSOR_ID                        0xd155
+#define SENSOR_DRVNAME_SC202CS_SUNNY_MIPI_RAW         "sc202cs_sunny_mipi_raw"
+#define SC202CS_SUNNY_SENSOR_ID                        0xeb52
+#define SENSOR_DRVNAME_OV02B10_TRULY_MIPI_RAW         "ov02b10_truly_mipi_raw"
+#define OV02B10_TRULY_SENSOR_ID                        0x0015
+#define S5KJNS_SUNNY_SENSOR_INDIA_ID                          (0x38ef+1)
+#define OV50D40_TRULY_SENSOR_INDIA_ID                         (0x565044+1)
+#define OV8856_SUNNY_SENSOR_INDIA_ID                          (0x885a+2)
+#define OV8856_OFILM_SENSOR_INDIA_ID                          (0x885a+3)
+#define IMX355_SUNNY_SENSOR_INDIA_ID                          (0x356+1)
+#define SC820CS_TRULY_SENSOR_INDIA_ID                         (0xd155+1)
+#define SC202CS_SUNNY_SENSOR_INDIA_ID                         (0xeb52+1)
+#define OV02B10_TRULY_SENSOR_INDIA_ID                         (0x0015+1)
+#endif
+
 #endif              /* _KD_IMGSENSOR_H */
