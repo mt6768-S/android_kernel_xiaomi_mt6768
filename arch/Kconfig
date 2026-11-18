@@ -566,6 +566,15 @@ config AUTOFDO_CLANG
 
 	  If unsure, say N.
 
+config AUTOFDO_CLANG_PROFILER_ARM64_SPE
+	bool "Enable configs for ARM64 SPE platform"
+	depends on AUTOFDO_CLANG
+	select ARM_SPE_PMU if ARM64
+	select PID_IN_CONTEXTIDR if ARM64
+	help
+	  Enables configs for ARM64 SPE platform like ARM_SPE_PMU,
+	  PID_IN_CONTEXTIDR and kpti=off in cmdline.
+
 config CFI
 	bool
 

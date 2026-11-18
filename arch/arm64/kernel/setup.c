@@ -316,6 +316,16 @@ void __init setup_arch(char **cmdline_p)
 	 * cpufeature code and early parameters.
 	 */
 	jump_label_init();
+
+#ifdef CONFIG_AUTOFDO_CLANG_PROFILER_ARM64_SPE
+	boot_command_line[COMMAND_LINE_SIZE - 1] = '\0';
+
+	if (strstr(boot_command_line, "kpti=") == NULL)
+		strlcat(boot_command_line, " kpti=off",
+			COMMAND_LINE_SIZE);
+#endif
+
+
 	parse_early_param();
 
 	/*

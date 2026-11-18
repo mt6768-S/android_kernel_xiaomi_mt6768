@@ -154,6 +154,20 @@ Here is an example workflow for AutoFDO kernel:
 
       $ perf record --pfm-events RETIRED_TAKEN_BRANCH_INSTRUCTIONS:k -a -N -b -c <count> -o <perf_file> -- <loadtest>
 
+   - For arm64 SPE platforms::
+
+      $ perf record -e arm_spe_0// -a -N -c <count> -o <perf_file> -- <loadtest>
+
+     SPE profiling requires ``CONFIG_ARM_SPE_PMU=y`` and
+     ``CONFIG_PID_IN_CONTEXTIDR=y``. Depending on the kernel and perf
+     versions, additional SPE filters may be required. Check the event
+     syntax supported by the target with ``perf list``.
+
+   - For arm64 ETM platforms, collect an ETM trace using the platform's
+     OpenCSD/perf workflow and pass the resulting perf data to the
+     AutoFDO conversion tool. BRBE can be used where the hardware and
+     kernel support it.
+
 4) (Optional) Download the raw perf file to the host machine.
 
 5) To generate an AutoFDO profile, two offline tools are available:
@@ -171,6 +185,12 @@ Here is an example workflow for AutoFDO kernel:
 
       $ create_llvm_prof --binary=<vmlinux> --profile=<perf_file> --format=extbinary --out=<profile_file>
 
+   For arm64 SPE data, use an AutoFDO release with SPE support (v0.20 or
+   later) and select its SPE profiler when required::
+
+      $ create_llvm_prof --binary=<vmlinux> --profile=<perf_file> \
+            --profiler=perf_spe --format=extbinary --out=<profile_file>
+
    Note that multiple AutoFDO profile files can be merged into one via::
 
       $ llvm-profdata merge -o <profile_file> <profile_1> <profile_2> ... <profile_n>
@@ -179,3 +199,8 @@ Here is an example workflow for AutoFDO kernel:
    (Note CONFIG_AUTOFDO_CLANG needs to be enabled)::
 
       $ make LLVM=1 CLANG_AUTOFDO_PROFILE=<profile_file>
+
+   Keep the unoptimized ``vmlinux`` used during profiling, including its
+   debug information, and use that same binary when converting the raw
+   perf data. The generated AutoFDO profile, rather than the raw
+   ``perf.data`` file, is passed to ``CLANG_AUTOFDO_PROFILE``.
