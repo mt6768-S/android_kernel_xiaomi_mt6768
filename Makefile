@@ -899,6 +899,32 @@ export CFLAGS_AUTOFDO_CLANG
 
 endif
 
+ifdef CONFIG_PROPELLER_CLANG
+ifdef CLANG_PROPELLER_PROFILE_PREFIX
+CFLAGS_PROPELLER_CLANG += -fbasic-block-sections=list=$(CLANG_PROPELLER_PROFILE_PREFIX)_cc_profile.txt -ffunction-sections
+KBUILD_LDFLAGS += --symbol-ordering-file=$(CLANG_PROPELLER_PROFILE_PREFIX)_ld_profile.txt --no-warn-symbol-ordering
+else
+CFLAGS_PROPELLER_CLANG += -fbasic-block-sections=labels
+endif
+
+ifndef CONFIG_DEBUG_INFO
+ifndef CONFIG_AUTOFDO_CLANG
+CFLAGS_PROPELLER_CLANG += -gmlt
+endif
+endif
+
+ifdef CONFIG_LTO_CLANG_THIN
+ifdef CLANG_PROPELLER_PROFILE_PREFIX
+KBUILD_LDFLAGS += --lto-basic-block-sections=$(CLANG_PROPELLER_PROFILE_PREFIX)_cc_profile.txt
+else
+KBUILD_LDFLAGS += --lto-basic-block-sections=labels
+endif
+endif
+
+KBUILD_CFLAGS_KERNEL += $(CFLAGS_PROPELLER_CLANG)
+export CFLAGS_PROPELLER_CLANG
+endif
+
 ifdef CONFIG_LTO_CLANG
 ifdef CONFIG_THINLTO
 lto-clang-flags	:= -flto=thin

@@ -140,6 +140,9 @@ SECTIONS
 		. = ALIGN(16);
 		*(.got)			/* Global offset table		*/
 	}
+	#ifdef CONFIG_PROPELLER_CLANG
+	.llvm_bb_addr_map : { *(.llvm_bb_addr_map) }
+	#endif
 
 	. = ALIGN(SEGMENT_ALIGN);
 	_etext = .;			/* End of text section */

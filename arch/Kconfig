@@ -575,6 +575,15 @@ config AUTOFDO_CLANG_PROFILER_ARM64_SPE
 	  Enables configs for ARM64 SPE platform like ARM_SPE_PMU,
 	  PID_IN_CONTEXTIDR and kpti=off in cmdline.
 
+config ARCH_SUPPORTS_PROPELLER_CLANG
+	bool
+
+config PROPELLER_CLANG
+	bool "Enable Clang's Propeller build"
+	depends on ARCH_SUPPORTS_PROPELLER_CLANG
+	depends on CC_IS_CLANG && CLANG_VERSION >= 190000
+	depends on AUTOFDO_CLANG
+
 config CFI
 	bool
 
