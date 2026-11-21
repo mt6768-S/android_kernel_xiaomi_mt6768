@@ -1041,9 +1041,14 @@ void charger_manager_set_prop_system_temp_level(int temp_level)
 {
 	int thermal_icl_ua = 0;
 	bool is_cn = false;
+	int usb_type;
 
 	if (pinfo == NULL)
 		return ;
+	/* boards without a "usb" supply (fire): look again, then fall back to DCP */
+	if (!pinfo->usb_psy)
+		pinfo->usb_psy = power_supply_get_by_name("usb");
+	usb_type = pinfo->usb_psy ? pinfo->usb_psy->desc->type : POWER_SUPPLY_TYPE_USB_DCP;
 	pcba_to_thermal = get_huaqin_pcba_config();
 #if defined(CONFIG_TARGET_PRODUCT_LANCELOT)
 	if (pcba_to_thermal == PCBA_J19_MP_CN)
@@ -1064,7 +1069,7 @@ void charger_manager_set_prop_system_temp_level(int temp_level)
 		pinfo->system_temp_level = temp_level;
 
 	if (is_cn == true) {
-		switch (pinfo->usb_psy->desc->type) {
+		switch (usb_type) {
 		case POWER_SUPPLY_TYPE_USB_HVDCP:
 			thermal_icl_ua = thermal_mitigation_qc2_cn[pinfo->system_temp_level];
 			break;
@@ -1077,7 +1082,7 @@ void charger_manager_set_prop_system_temp_level(int temp_level)
 			break;
 		}
 	} else {
-		switch (pinfo->usb_psy->desc->type) {
+		switch (usb_type) {
 		case POWER_SUPPLY_TYPE_USB_HVDCP:
 			thermal_icl_ua = thermal_mitigation_qc2[pinfo->system_temp_level];
 			break;
@@ -1099,7 +1104,7 @@ void charger_manager_set_prop_system_temp_level(int temp_level)
 		thermal_is_500 = false;
 	}
 	pr_err("%s, system_temp_level:%d thermal_icl_ua:%d usb_type:%d\n", __func__,
-			pinfo->system_temp_level, thermal_icl_ua, pinfo->usb_psy->desc->type);
+			pinfo->system_temp_level, thermal_icl_ua, usb_type);
 
 	// pr_err("%s, system_temp_level:%d thermal_icl_ua:%d \n", __func__,
 	// 		pinfo->system_temp_level, thermal_icl_ua);
