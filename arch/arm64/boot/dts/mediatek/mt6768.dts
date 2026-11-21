@@ -3150,7 +3150,7 @@ defined(CONFIG_MTK_CAM_SECURITY_SUPPORT)
 			"TOP_ULPOSC1_D2",
 			"TOP_ULPOSC1_D8";
 
-#ifdef CONFIG_TARGET_PRODUCT_SELENE
+#ifdef CONFIG_MTK_MT6382_BDG
 		mboxes = <&gce_mbox_bdg 0 0 CMDQ_THR_PRIO_4>,
 			<&gce_mbox_bdg 1 0 CMDQ_THR_PRIO_4>,
 			<&gce_mbox_bdg 2 0 CMDQ_THR_PRIO_4>,
