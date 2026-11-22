@@ -91,6 +91,8 @@ struct lcm_setting_table {
 /* Huaqin modify for K19S-31 by jiangyue at 2022/01/14 start */
 int mtk_mm_clk = 270;
 int mtk_rxtx_ratio = 225;
+/* K19S (selene) needs one extra cycle on HS/CLK trail; fire (m19a) uses the spec values */
+int mtk_bdg_trail_extra = 1;
 extern char *saved_command_line;
 int mtk_panel_compare(void)
 {
@@ -102,6 +104,11 @@ int mtk_panel_compare(void)
 	if (saved_command_line && strstr(saved_command_line, "dsi_panel_k19a_43_02_0b_dsc_vdo_lcm_drv")) {
 		mtk_mm_clk = 405;
 		mtk_rxtx_ratio = 232;
+	} else if (saved_command_line && strstr(saved_command_line, "LCM_name=dsi_panel_m19a_")) {
+		/* fire (Redmi 12): values from fire-t-oss ddp_disp_bdg.h, vdo 90 Hz */
+		mtk_mm_clk = 270;
+		mtk_rxtx_ratio = 223;
+		mtk_bdg_trail_extra = 0;
 	} else {
 		mtk_mm_clk = 270;
 		mtk_rxtx_ratio = 225;
@@ -1173,6 +1180,7 @@ int bdg_mipi_tx_dphy_clk_setting(enum DISP_BDG_ENUM module,
 int bdg_tx_phy_config(enum DISP_BDG_ENUM module,
 			void *cmdq, unsigned int tx_data_rate)
 {
+	mtk_panel_compare();
 	unsigned int i;
 	u32 ui, cycle_time;
 	unsigned int hs_trail;
@@ -1209,7 +1217,7 @@ int bdg_tx_phy_config(enum DISP_BDG_ENUM module,
 	/* hs_trail = 80ns+4*UI */
 	hs_trail = 80 + 4 * ui;
 	timcon0.HS_TRAIL = (hs_trail > cycle_time) ?
-				NS_TO_CYCLE(hs_trail, cycle_time) + 1 : 2;
+				NS_TO_CYCLE(hs_trail, cycle_time) + mtk_bdg_trail_extra : 2;
 
 	/* hs_exit > 100ns (spec) */
 	/* hs_exit = 120ns */
@@ -1239,7 +1247,7 @@ int bdg_tx_phy_config(enum DISP_BDG_ENUM module,
 
 	/* clk_trail > 60ns (spec) */
 	/* clk_trail = 100ns */
-	timcon2.CLK_TRAIL = NS_TO_CYCLE(100, cycle_time) + 1;
+	timcon2.CLK_TRAIL = NS_TO_CYCLE(100, cycle_time) + mtk_bdg_trail_extra;
 	if (timcon2.CLK_TRAIL < 2)
 		timcon2.CLK_TRAIL = 2;
 
