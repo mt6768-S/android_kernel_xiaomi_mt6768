@@ -3806,6 +3806,8 @@ int primary_display_init(char *lcm_name, unsigned int lcm_fps,
 			set_mt6382_init(0);
 	}
 
+	pgc->vfp_chg_sync_bdg = true;
+
 	init_cmdq_slots(&(pgc->ovl_config_time), 3, 0);
 	init_cmdq_slots(&(pgc->cur_config_fence),
 		DISP_SESSION_TIMELINE_COUNT, 0);
