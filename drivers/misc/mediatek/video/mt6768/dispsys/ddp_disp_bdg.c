@@ -93,6 +93,8 @@ int mtk_mm_clk = 270;
 int mtk_rxtx_ratio = 225;
 /* K19S (selene) needs one extra cycle on HS/CLK trail; fire (m19a) uses the spec values */
 int mtk_bdg_trail_extra = 1;
+/* fire (m19a): switch the bridge RX between cmd and vdo mode with the DSI, as stock does */
+int mtk_bdg_rx_mode_switch;
 extern char *saved_command_line;
 int mtk_panel_compare(void)
 {
@@ -109,6 +111,7 @@ int mtk_panel_compare(void)
 		mtk_mm_clk = 270;
 		mtk_rxtx_ratio = 223;
 		mtk_bdg_trail_extra = 0;
+		mtk_bdg_rx_mode_switch = 1;
 	} else {
 		mtk_mm_clk = 270;
 		mtk_rxtx_ratio = 225;

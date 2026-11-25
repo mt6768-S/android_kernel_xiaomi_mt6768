@@ -47,6 +47,12 @@
 #include "ddp_disp_bdg.h"
 #include "ddp_reg_disp_bdg.h"
 
+#ifdef CONFIG_MTK_MT6382_BDG
+#define DSI_TRAIL_EXTRA mtk_bdg_trail_extra
+#else
+#define DSI_TRAIL_EXTRA 1
+#endif
+
 /*****************************************************************************/
 enum MIPITX_PAD_VALUE {
 	PAD_D2P_V = 0,
@@ -2209,9 +2215,12 @@ void DSI_PHY_TIMCONFIG(enum DISP_MODULE_ENUM module,
 		/* hs_trail > max(8*UI, 60ns+4*UI) (spec) */
 		/* hs_trail = 80ns+4*UI */
 		hs_trail = 80 + 4 * ui;
+#ifdef CONFIG_MTK_MT6382_BDG
+		mtk_panel_compare();
+#endif
 		timcon0.HS_TRAIL = (hs_trail > cycle_time) ?
 				(NS_TO_CYCLE(hs_trail, cycle_time) +
-				NS_TO_CYCLE_MOD(hs_trail, cycle_time) + 1) : 2;
+				NS_TO_CYCLE_MOD(hs_trail, cycle_time) + DSI_TRAIL_EXTRA) : 2;
 
 		/* hs_exit > 100ns (spec) */
 		/* hs_exit = 120ns */
@@ -2243,7 +2252,7 @@ void DSI_PHY_TIMCONFIG(enum DISP_MODULE_ENUM module,
 
 		/* clk_trail > 60ns (spec) */
 		/* clk_trail = 100ns */
-		timcon2.CLK_TRAIL = NS_TO_CYCLE(100, cycle_time) + 1;
+		timcon2.CLK_TRAIL = NS_TO_CYCLE(100, cycle_time) + DSI_TRAIL_EXTRA;
 		if (timcon2.CLK_TRAIL < 2)
 			timcon2.CLK_TRAIL = 2;
 		timcon2.CONT_DET = 0;
@@ -6903,6 +6912,7 @@ int ddp_dsi_build_cmdq(enum DISP_MODULE_ENUM module,
 		unsigned char setcmd[] = {0x10, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00}; //ID 0x14
 		unsigned char reset0[] = {0x10, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00}; //ID 0x10
 		unsigned char reset1[] = {0x10, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00}; //ID 0x10
+		unsigned char setrxcmd[] = {0x31, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00}; //ID 0x70
 #endif
 		/* use cmdq to stop dsi vdo mode */
 		/* 0. set dsi cmd mode */
@@ -6950,21 +6960,31 @@ int ddp_dsi_build_cmdq(enum DISP_MODULE_ENUM module,
 #ifdef CONFIG_MTK_MT6382_BDG
 		DSI_send_cmd_cmd(cmdq_trigger_handle, DISP_MODULE_DSI0, 1, 0x79, 0x00, 7,
 				stopdsi, 1);
+		if (mtk_bdg_rx_mode_switch && cmdq_trigger_handle)
+			cmdq_pkt_sleep(((struct cmdqRecStruct *)cmdq_trigger_handle)->pkt,
+				CMDQ_US_TO_TICK(80), CMDQ_GPR_R12);
 		DSI_send_cmd_cmd(cmdq_trigger_handle, DISP_MODULE_DSI0, 1, 0x79, 0x10, 7,
 				reset1, 1);
 		DSI_send_cmd_cmd(cmdq_trigger_handle, DISP_MODULE_DSI0, 1, 0x79, 0x10, 7,
 				reset0, 1);
 		DSI_send_cmd_cmd(cmdq_trigger_handle, DISP_MODULE_DSI0, 1, 0x79, 0x14, 7,
 				setcmd, 1);
+		if (mtk_bdg_rx_mode_switch)
+			DSI_send_cmd_cmd(cmdq_trigger_handle, DISP_MODULE_DSI0, 1, 0x79, 0x70, 7,
+					setrxcmd, 1);
 #endif
 	} else if (state == CMDQ_START_VDO_MODE) {
 #ifdef CONFIG_MTK_MT6382_BDG
 		unsigned char setvdo[] = {0x10, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00}; //ID 0x14
 		unsigned char stopdsi[] = {0x10, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00}; //ID 0x00
 		unsigned char startdsi[] = {0x10, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00}; //ID 0x00
+		unsigned char setrxvdo[] = {0x31, 0x02, 0x00, 0x01, 0x00, 0x00, 0x00}; //ID 0x70
 
 		DSI_send_cmd_cmd(cmdq_trigger_handle, DISP_MODULE_DSI0, 1, 0x79, 0x14, 7,
 				setvdo, 1);
+		if (mtk_bdg_rx_mode_switch)
+			DSI_send_cmd_cmd(cmdq_trigger_handle, DISP_MODULE_DSI0, 1, 0x79, 0x70, 7,
+					setrxvdo, 1);
 		DSI_send_cmd_cmd(cmdq_trigger_handle, DISP_MODULE_DSI0, 1, 0x79, 0x00, 7,
 				stopdsi, 1);
 		DSI_send_cmd_cmd(cmdq_trigger_handle, DISP_MODULE_DSI0, 1, 0x79, 0x00, 7,
