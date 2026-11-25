@@ -96,6 +96,8 @@ unsigned int get_dsc_state(void);
 unsigned int get_bdg_rxtx_ratio(void);
 unsigned int get_bdg_mm_clk(void);
 int mtk_panel_compare(void);
+extern int mtk_bdg_trail_extra;
+extern int mtk_bdg_rx_mode_switch;
 void set_mt6382_init(unsigned int value);
 unsigned int get_mt6382_init(void);
 unsigned int get_bdg_tx_mode(void);
