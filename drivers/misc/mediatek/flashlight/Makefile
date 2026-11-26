@@ -43,3 +43,6 @@ subdir-ccflags-y += \
 	-I$(MTK_CUSTOM_PATH)/pmic \
 	-I$(MTK_CUSTOM_PATH)/power_throttling
 
+
+# torch strength: mtk_pwm.h needs the platform mach headers
+CFLAGS_flashlights-led191.o += -I$(srctree)/drivers/misc/mediatek/include/mt-plat/$(subst ",,$(CONFIG_MTK_PLATFORM))/include
