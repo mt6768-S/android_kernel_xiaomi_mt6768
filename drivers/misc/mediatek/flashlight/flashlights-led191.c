@@ -29,6 +29,7 @@ static char node_one_buf[20] = {"0"};
 static unsigned int flash_enable;
 #endif
 
+#include <mt-plat/mtk_pwm.h>
 #include "flashlight-core.h"
 #include "flashlight-dt.h"
 
@@ -176,6 +177,43 @@ static int led191_pinctrl_set(int pin, int state)
 /******************************************************************************
  * led191 operations
  *****************************************************************************/
+
+/* One UI torch strength. Samsung cameraserver ("Torch Strength with JDM") turns
+ * the torch on through the camera HAL, then writes 1001..1010 to
+ * /sys/class/camera/rear/rear_flash. LED191 has no current register, but it
+ * dims with PWM on EN: GPIO152 alternate function 1 is PWM2 (~25 kHz here).
+ */
+#define LED191_EN_GPIO		152
+#define LED191_EN_PWM_MODE	1
+#define LED191_EN_PWM_NO	2
+static const int led191_level_duty[11] = {
+	100, 6, 15, 30, 45, 60, 80, 100, 100, 100, 100 };
+static int led191_torch_level;	/* 0 = never set: plain GPIO, full power */
+static bool led191_torch_on, led191_pwm_on;
+extern int mtk_gpio_set_pinmux(unsigned int pin, int mode);
+
+static void led191_torch_apply(void)
+{
+	struct pwm_easy_config conf = {
+		.pwm_no = LED191_EN_PWM_NO,
+		.clk_src = PWM_CLK_OLD_MODE_BLOCK,
+		.clk_div = CLK_DIV1,
+		.duration = 1023,
+		.pmic_pad = 0,
+	};
+
+	/* select the DT "high" state first so pinctrl core tracks it, then
+	 * mux the pad to PWM2; disable() selects "low", which muxes it back */
+	led191_pinctrl_set(LED191_PINCTRL_PIN_HWEN, 1);
+	if (!led191_torch_level)
+		return;
+	conf.duty = led191_level_duty[led191_torch_level];
+	pwm_set_easy_config(&conf);
+	if (!led191_pwm_on)
+		mtk_gpio_set_pinmux(LED191_EN_GPIO, LED191_EN_PWM_MODE);
+	led191_pwm_on = true;
+}
+
 /* flashlight enable function */
 static int led191_enable(void)
 {
@@ -183,7 +221,8 @@ static int led191_enable(void)
 	int selpin = LED191_PINCTRL_PIN_HWSEL;
 
 	if (g_flash_duty == 1) {//torch mode
-		led191_pinctrl_set(enpin, 1);
+		led191_torch_on = true;
+		led191_torch_apply();
 	} else {				//flash mode
 		led191_pinctrl_set(enpin, 1);
 		led191_pinctrl_set(selpin, 0);
@@ -200,6 +239,11 @@ static int led191_disable(void)
 
 	led191_pinctrl_set(enpin, 0);
 	led191_pinctrl_set(selpin, 0);
+	led191_torch_on = false;
+	if (led191_pwm_on) {
+		mt_pwm_disable(LED191_EN_PWM_NO, 0);
+		led191_pwm_on = false;
+	}
 
 	return 0;
 }
@@ -524,6 +568,48 @@ int32_t mtk_torch_create_classdev(struct platform_device *pdev)
 }
 #endif
 
+
+/* /sys/class/camera/rear/rear_flash (Samsung torch strength node) */
+static ssize_t rear_flash_show(struct device *dev,
+		struct device_attribute *attr, char *buf)
+{
+	return sprintf(buf, "%d\n", led191_torch_level ? 1000 + led191_torch_level : 0);
+}
+
+static ssize_t rear_flash_store(struct device *dev,
+		struct device_attribute *attr, const char *buf, size_t count)
+{
+	int v;
+
+	if (kstrtoint(strim((char *)buf), 10, &v))
+		return -EINVAL;
+	if (v < 1001 || v > 1010)
+		return count;	/* on/off stays with the camera HAL */
+	mutex_lock(&led191_mutex);
+	led191_torch_level = v - 1000;
+	if (led191_torch_on)
+		led191_torch_apply();
+	mutex_unlock(&led191_mutex);
+	pr_info("led191: torch level %d, duty %d%%\n", led191_torch_level,
+		led191_level_duty[led191_torch_level]);
+	return count;
+}
+static DEVICE_ATTR_RW(rear_flash);
+
+static void led191_create_camera_node(void)
+{
+	struct class *cls = class_create(THIS_MODULE, "camera");
+	struct device *d;
+
+	if (IS_ERR(cls)) {
+		pr_info("led191: camera class: %ld\n", PTR_ERR(cls));
+		return;
+	}
+	d = device_create(cls, NULL, 0, NULL, "rear");
+	if (IS_ERR(d) || device_create_file(d, &dev_attr_rear_flash))
+		pr_info("led191: rear_flash node failed\n");
+}
+
 static int led191_probe(struct platform_device *pdev)
 {
 	struct led191_platform_data *pdata = dev_get_platdata(&pdev->dev);
@@ -587,6 +673,7 @@ static int led191_probe(struct platform_device *pdev)
 	mtk_flashlight_create_classdev(pdev);
 	mtk_torch_create_classdev(pdev);
 #endif
+	led191_create_camera_node();
 	pr_debug("Probe done.\n");
 
 	return 0;

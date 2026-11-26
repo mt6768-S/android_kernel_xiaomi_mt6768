@@ -458,3 +458,16 @@ late_initcall(pinctrl_mtk_debug_v2_init);
 
 MODULE_LICENSE("GPL v2");
 MODULE_DESCRIPTION("MediaTek Pinctrl DEBUG Driver");
+
+/* let drivers switch a pad's alternate function without a DT pinctrl state
+ * (selene torch: GPIO152 -> PWM2 for dimming, the stock dtbo has no such state)
+ */
+int mtk_gpio_set_pinmux(unsigned int pin, int mode)
+{
+	if (!g_hw)
+		mtk_gpio_find_mtk_pinctrl_dev();
+	if (!g_hw)
+		return -ENODEV;
+	return mtk_pctrl_set_pinmux(g_hw, pin, mode);
+}
+EXPORT_SYMBOL_GPL(mtk_gpio_set_pinmux);
