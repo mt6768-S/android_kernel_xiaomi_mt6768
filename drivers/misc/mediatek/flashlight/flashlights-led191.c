@@ -224,6 +224,8 @@ static int led191_enable(void)
 		led191_torch_on = true;
 		led191_torch_apply();
 	} else {				//flash mode
+		/* the camera HAL turns the torch on through this path too */
+		led191_torch_on = true;
 		led191_pinctrl_set(enpin, 1);
 		led191_pinctrl_set(selpin, 0);
 	}
@@ -240,6 +242,9 @@ static int led191_disable(void)
 	led191_pinctrl_set(enpin, 0);
 	led191_pinctrl_set(selpin, 0);
 	led191_torch_on = false;
+	/* cameraserver writes the level again after every torch-on; a plain
+	 * enable (camera flash) must stay at full power */
+	led191_torch_level = 0;
 	if (led191_pwm_on) {
 		mt_pwm_disable(LED191_EN_PWM_NO, 0);
 		led191_pwm_on = false;
