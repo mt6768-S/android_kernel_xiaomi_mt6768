@@ -34,14 +34,14 @@
 #define DEFAULT_PWM_NAME			"lmu-backlight"
 
 static struct ti_lmu_bl_chip *bl_chip;
-
-int translate_value[2048] = {0, 50, 55, 171, 253, 317, 360, 414, 452, 486, 516, 543, 568, 591, 612, 632, 651, 668, 684, 700, 714, 728, 742, 754, 767, 778, 790,\
-												800, 811, 821, 831, 840, 849, 858, 866, 875, 883, 891, 898, 906, 913, 920, 927, 934, 940, 947, 953, 959, 965, 971, 977, 983, 988,\
-												994, 999, 1004, 1009, 1014, 1019, 1024, 1029, 1034, 1038, 1043, 1048, 1052, 1056, 1061, 1065, 1069, 1073, 1077, 1081, 1085,\
-												1089, 1093, 1097, 1101, 1104, 1108, 1111, 1115, 1119, 1122, 1125, 1129, 1132, 1135, 1139, 1142, 1145, 1148, 1151, 1155, 1158,\
-												1161, 1164, 1167, 1170, 1172, 1175, 1178, 1181, 1184, 1187, 1189, 1192, 1195, 1197, 1200, 1203, 1205, 1208, 1210, 1213, 1215,\
-												1218, 1220, 1223, 1225, 1228, 1230, 1232, 1235, 1237, 1239, 1242, 1244, 1246, 1248, 1251, 1253, 1255, 1257, 1259, 1261, 1263,\
-												1266, 1268, 1270, 1272, 1274, 1276, 1278, 1280, 1282, 1284, 1286, 1288, 1290, 1291, 1293, 1295, 1297, 1299, 1301, 1303, 1305, 1306,\
+/* Huaqin modify for HQ-142064 by caogaojie at 2021/06/28 start */
+int translate_value[2048] = {0, 50, 55, 171, 253, 317, 360, 414, 452, 486, 516, 543, 568, 591, 601, 611, 621, 631, 641, 651, 661, 671, 681, 691, 700, 709, 718,\
+												726, 734, 742, 750, 758, 765, 772, 779, 786, 793, 800, 807, 817, 824, 830, 836, 842, 848, 854, 860, 866, 872, 878, 884, 890, 896,\
+												901, 906, 911, 916, 921, 926, 931, 936, 941, 946, 951, 956, 960, 964, 968, 972, 976,  980, 984, 988, 992,\
+												998, 1002, 1006, 1010, 1014, 1018, 1026, 1030, 1034, 1038, 1042, 1050, 1054, 1058, 1062, 1068, 1072, 1078, 1082, 1086, 1090,\
+												1094, 1098, 1102, 1106, 1110, 1114, 1118, 1122, 1126, 1130, 1134, 1138, 1142, 1146, 1150, 1154, 1158, 1162, 1166, 1170, 1174,\
+												1178, 1182, 1185, 1188, 1191, 1194, 1197, 1200, 1203, 1206, 1209, 1212, 1217, 1220, 1223, 1225, 1228, 1231, 1234, 1237, 1240,\
+												1243, 1246, 1249, 1252, 1255, 1258, 1261, 1264, 1267, 1270, 1273, 1277, 1280, 1283, 1286, 1289, 1292, 1295, 1298, 1301, 1304, 1306,\
 												1308, 1310, 1312, 1314, 1315, 1317, 1319, 1321, 1322, 1324, 1326, 1327, 1329, 1331, 1332, 1334, 1336, 1337, 1339, 1341, 1342,\
 												1344, 1345, 1347, 1348, 1350, 1352, 1353, 1355, 1356, 1358, 1359, 1361, 1362, 1364, 1365, 1367, 1368, 1370, 1371, 1372, 1374,\
 												1375, 1377, 1378, 1380, 1381, 1382, 1384, 1385, 1386, 1388, 1389, 1391, 1392, 1393, 1395, 1396, 1397, 1399, 1400, 1401, 1402,\
@@ -132,28 +132,28 @@ int translate_value[2048] = {0, 50, 55, 171, 253, 317, 360, 414, 452, 486, 516, 
 												2031, 2031, 2032, 2032, 2032, 2032, 2032, 2032, 2032, 2033, 2033, 2033, 2033, 2033, 2033, 2033, 2034, 2034, 2034, 2034, 2034,\
 												2034, 2034, 2035, 2035, 2035, 2035, 2035, 2035, 2035, 2036, 2036, 2036, 2036, 2036, 2036, 2036, 2037, 2037, 2037, 2037, 2037,\
 												2037, 2037, 2038, 2038, 2038, 2038, 2038, 2038, 2038, 2039, 2039, 2039, 2039, 2039, 2039, 2039, 2040, 2040, 2040, 2040};
-
+/* Huaqin modify for HQ-142064 by caogaojie at 2021/06/28 end */
 static int dump_i2c_reg(struct ti_lmu_bl_chip *chip)
 {
 	struct regmap *regmap = chip->lmu->regmap;
 	int ret_val = 0;
 #if 1
 	regmap_read(regmap, 0x10, &ret_val);
-	pr_err("[bkl] %s read 0x10 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x10 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x1A, &ret_val);
-	pr_err("[bkl] %s read 0x1A = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x1A = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x1C, &ret_val);
-	pr_err("[bkl] %s read 0x1C = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x1C = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x22, &ret_val);
-	pr_err("[bkl] %s read 0x22 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x22 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x23, &ret_val);
-	pr_err("[bkl] %s read 0x23 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x23 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x24, &ret_val);
-	pr_err("[bkl] %s read 0x24 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x24 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x18, &ret_val);
-	pr_err("[bkl] %s read 0x18 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x18 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x16, &ret_val);
-	pr_err("[bkl] %s read 0x16 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x16 = 0x%x\n", __func__, ret_val);
 #else
 	regmap_read(regmap, 0x00, &ret_val);
 	pr_err("[bkl] %s read 0x00 = 0x%x\n", __func__, ret_val);
@@ -211,28 +211,28 @@ int ti_hbm_set(enum backlight_hbm_mode hbm_mode)
 	struct regmap *regmap = bl_chip->lmu->regmap;
 	int value = 0;
 
-	pr_err("[bkl] %s enter\n", __func__);
+	pr_debug("[bkl] %s enter\n", __func__);
 
 	switch (hbm_mode) {
 	case HBM_MODE_DEFAULT:
 		regmap_write(regmap, 0x18, 0x15);//21.8mA
-		pr_err("This is hbm mode 1\n");
+		pr_debug("This is hbm mode 1\n");
 		break;
 	case HBM_MODE_LEVEL1:
 		regmap_write(regmap, 0x18, 0x19);//25mA
-		pr_err("This is hbm mode 2\n");
+		pr_debug("This is hbm mode 2\n");
 		break;
 	case HBM_MODE_LEVEL2:
 		regmap_write(regmap, 0x18, 0x1C);//27.4mA
-		pr_err("This is hbm mode 3\n");
+		pr_debug("This is hbm mode 3\n");
 		break;
 	default:
-		pr_err("This isn't hbm mode\n");
+		pr_debug("This isn't hbm mode\n");
 		break;
 	}
 
 	regmap_read(regmap, 0x18, &value);
-	pr_err("[bkl]%s hbm_mode = %d,regmap value=0x%x\n", __func__, hbm_mode, value);
+	pr_debug("[bkl]%s hbm_mode = %d,regmap value=0x%x\n", __func__, hbm_mode, value);
 	return 0;
 }
 
@@ -294,9 +294,9 @@ static int ti_lmu_backlight_update_brightness_register(struct ti_lmu_bl *lmu_bl,
 	u8 reg, val;
 	int ret;
 	int i = 0;
-
-	regmap_write(regmap, 0x13, 0x01);
-
+	/* Huaqin modify for HQ-142064 by caogaojie at 2021/06/28 start */
+	regmap_write(regmap, 0x13, 0x22);
+	/* Huaqin modify for HQ-142064 by caogaojie at 2021/06/28 start */
 	if (lmu_bl->mode == BL_PWM_BASED) {
 		switch (cfg->pwm_action) {
 		case UPDATE_PWM_ONLY:
@@ -345,11 +345,11 @@ static int ti_lmu_backlight_update_brightness_register(struct ti_lmu_bl *lmu_bl,
 					 brightness);
 		if (ret)
 			return ret;
-		pr_err("[bkl][after]11bit %s brightness = %d\n", __func__, brightness);
+		pr_debug("[bkl][after]11bit %s brightness = %d\n", __func__, brightness);
 		val = (brightness >> LMU_BACKLIGHT_11BIT_MSB_SHIFT) & 0xFF;
 	} else {
 		val = brightness & 0xFF;
-		pr_err("[bkl]8bit %s val = %d\n", __func__, val);
+		pr_debug("[bkl]8bit %s val = %d\n", __func__, val);
 	}
 
 	reg = reginfo->brightness_msb[lmu_bl->bank_id];
@@ -638,7 +638,7 @@ static int ti_lmu_backlight_update_ctrl_mode(struct ti_lmu_bl *lmu_bl)
 	 * Update PWM configuration register.
 	 * If the mode is register based, then clear the bit.
 	 */
-	pr_err("[bkl] %s reg = 0x%x\n", __func__, *reg);
+	pr_debug("[bkl] %s reg = 0x%x\n", __func__, *reg);
 	if (lmu_bl->mode == BL_PWM_BASED)
 		val = LMU_BL_GET_VAL(*reg);
 	else
@@ -747,7 +747,7 @@ static int ti_lmu_backlight_init(struct ti_lmu_bl_chip *chip)
 	//u32 *reg = chip->cfg->reginfo->init;
 	//int num_init = chip->cfg->reginfo->num_init;
 	//int i, ret;
-	pr_err("[bkl] %s enter\n", __func__);
+	pr_debug("[bkl] %s enter\n", __func__);
 	/*
 	 * 'init' register data consists of address, mask, value.
 	 * Driver can get each data by using LMU_BL_GET_ADDR(),
@@ -774,6 +774,9 @@ static int ti_lmu_backlight_init(struct ti_lmu_bl_chip *chip)
 	}
 #else
 	regmap_write(regmap, 0x10, 0x03);
+	/* Huaqin modify for HQ-142064 by caogaojie at 2021/06/28 start */
+	regmap_write(regmap, 0x13, 0x22);
+	/* Huaqin modify for HQ-142064 by caogaojie at 2021/06/28 end */
 	regmap_write(regmap, 0x16, 0x00);
 	regmap_write(regmap, 0x19, 0x03);
 	regmap_write(regmap, 0x18, 0x15);//21.8mA default
@@ -784,7 +787,7 @@ static int ti_lmu_backlight_init(struct ti_lmu_bl_chip *chip)
 	regmap_write(regmap, 0x24, 0x02);
 #endif
 
-	pr_err("[bkl] %s finish\n", __func__);
+	pr_debug("[bkl] %s finish\n", __func__);
 	return 0;
 }
 
@@ -857,51 +860,51 @@ static ssize_t i2c_reg_dump_show(struct device *dev,
 	pr_err("[bkl] %s read 0x16 = 0x%x\n", __func__, ret_val);
 #else
 	regmap_read(regmap, 0x00, &ret_val);
-	pr_err("[bkl] %s read 0x00 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x00 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x01, &ret_val);
-	pr_err("[bkl] %s read 0x01 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x01 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x10, &ret_val);
-	pr_err("[bkl] %s read 0x10 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x10 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x11, &ret_val);
-	pr_err("[bkl] %s read 0x11 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x11 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x12, &ret_val);
-	pr_err("[bkl] %s read 0x12 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x12 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x13, &ret_val);
-	pr_err("[bkl] %s read 0x13 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x13 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x14, &ret_val);
-	pr_err("[bkl] %s read 0x14 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x14 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x15, &ret_val);
-	pr_err("[bkl] %s read 0x15 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x15 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x16, &ret_val);
-	pr_err("[bkl] %s read 0x16 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x16 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x17, &ret_val);
-	pr_err("[bkl] %s read 0x17 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x17 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x18, &ret_val);
-	pr_err("[bkl] %s read 0x18 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x18 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x19, &ret_val);
-	pr_err("[bkl] %s read 0x19 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x19 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x1A, &ret_val);
-	pr_err("[bkl] %s read 0x1A = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x1A = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x1B, &ret_val);
-	pr_err("[bkl] %s read 0x1B = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x1B = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x1C, &ret_val);
-	pr_err("[bkl] %s read 0x1C = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x1C = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x20, &ret_val);
-	pr_err("[bkl] %s read 0x20 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x20 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x21, &ret_val);
-	pr_err("[bkl] %s read 0x21 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x21 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x22, &ret_val);
-	pr_err("[bkl] %s read 0x22 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x22 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x23, &ret_val);
-	pr_err("[bkl] %s read 0x23 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x23 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0x24, &ret_val);
-	pr_err("[bkl] %s read 0x24 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0x24 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0xB0, &ret_val);
-	pr_err("[bkl] %s read 0xB0 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0xB0 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0xB2, &ret_val);
-	pr_err("[bkl] %s read 0xB2 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0xB2 = 0x%x\n", __func__, ret_val);
 	regmap_read(regmap, 0xB4, &ret_val);
-	pr_err("[bkl] %s read 0xB4 = 0x%x\n", __func__, ret_val);
+	pr_debug("[bkl] %s read 0xB4 = 0x%x\n", __func__, ret_val);
 #endif
 
 	ret = snprintf(buf, PAGE_SIZE, "reg dump done \n");
@@ -918,7 +921,7 @@ ti_lmu_backlight_register(struct device *dev, struct ti_lmu *lmu,
 	struct ti_lmu_bl *each;
 	int i, ret;
 
-	pr_err("[bkl] %s enter\n", __func__);
+	pr_debug("[bkl] %s enter\n", __func__);
 
 	if (!cfg) {
 		dev_err(dev, "Operation is not configured\n");
@@ -979,7 +982,7 @@ ti_lmu_backlight_register(struct device *dev, struct ti_lmu *lmu,
 		dev_err(dev, "failed to create dev_attr_i2c_reg_dump\n");
 	}
 
-	pr_err("[bkl] %s finish\n", __func__);
+	pr_debug("[bkl] %s finish\n", __func__);
 
 	return chip;
 }
@@ -1020,7 +1023,7 @@ static int ti_lmu_backlight_probe(struct platform_device *pdev)
 	struct ti_lmu_bl_chip *chip;
 	int ret;
 
-	pr_err("[bkl] %s enter\n", __func__);
+	pr_debug("[bkl] %s enter\n", __func__);
 
 	/* set PM439_GPIO4 output ,HIGH and enable */
 	//spmi_register_write(0xC340,0x11);
@@ -1046,7 +1049,7 @@ static int ti_lmu_backlight_probe(struct platform_device *pdev)
 	}
 
 	platform_set_drvdata(pdev, chip);
-	pr_err("[bkl] %s finish\n", __func__);
+	pr_debug("[bkl] %s finish\n", __func__);
 	return 0;
 }
 
